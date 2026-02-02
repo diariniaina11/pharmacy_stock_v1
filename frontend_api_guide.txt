@@ -1,0 +1,93 @@
+GUIDE D'INTÉGRATION FRONTEND (REACT) - BACKEND (LARAVEL API)
+===========================================================
+
+Ce guide détaille les étapes suivies pour connecter le frontend React (frontv2) à l'API REST Laravel (backv2).
+
+1. CONFIGURATION DU CLIENT HTTP (AXIOS)
+---------------------------------------
+Fichier : src/api/client.ts
+
+On crée une instance Axios configurée avec l'URL de base de l'API.
+Cela évite de répéter l'URL "http://127.0.0.1:8000/api" à chaque appel.
+
+Exemple :
+const apiClient = axios.create({
+  baseURL: 'http://127.0.0.1:8000/api',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
+
+2. DÉFINITION DES TYPES (TYPESCRIPT)
+------------------------------------
+Fichier : src/api/types.ts
+
+On définit des interfaces TypeScript qui correspondent EXACTEMENT à la réponse JSON renvoyée par Laravel (noms des colonnes en base de données).
+
+Exemple (Utilisateur) :
+export interface ApiUtilisateur {
+  id: number;
+  nom: string;
+  email: string | null;
+  // ... autres champs comme en BDD
+}
+
+3. CRÉATION DE LA COUCHE SERVICE
+--------------------------------
+Fichier : src/api/services.ts
+
+C'est ici que se font les appels réels (GET, POST, PUT, DELETE).
+On transforme aussi les données "Format Backend" (snake_case) vers "Format Frontend" (camelCase) si nécessaire.
+
+Exemple :
+export const usersApi = {
+  getAll: async (): Promise<User[]> => {
+    // 1. Appel API
+    const { data } = await apiClient.get<ApiUtilisateur[]>('/users');
+    // 2. Transformation
+    return data.map(transformUser);
+  },
+};
+
+4. INTÉGRATION DANS LE CONTEXTE (ETAT GLOBAL)
+---------------------------------------------
+Fichiers : src/contexts/DataContext.tsx ou AuthContext.tsx
+
+Le contexte gère l'état de l'application. Il utilise les services pour récupérer les données et les stocker dans des variables React (useState).
+
+Exemple (dans DataProvider) :
+const fetchData = async () => {
+  const usersData = await usersApi.getAll();
+  setUsers(usersData); // Met à jour l'état global
+};
+
+5. UTILISATION DANS LES COMPOSANTS
+----------------------------------
+Fichier : src/pages/Dashboard.tsx (ou n'importe quel composant)
+
+Les composants s'abonnent au contexte pour afficher les données. Ils n'appellent jamais l'API directement.
+
+Exemple :
+const Dashboard = () => {
+  // Récupération des données depuis le contexte
+  const { users } = useData(); 
+  
+  return (
+    <div>Il y a {users.length} utilisateurs</div>
+  );
+};
+
+RÉSUMÉ DU FLUX DE DONNÉES
+-------------------------
+Base de Données (MySQL) 
+       ⬇
+Laravel API (JSON)
+       ⬇
+Axios Client (HTTP)
+       ⬇
+Service Layer (Transformation)
+       ⬇
+React Context (State)
+       ⬇
+Composant React (UI)

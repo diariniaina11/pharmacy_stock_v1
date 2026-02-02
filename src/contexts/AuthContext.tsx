@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { User, AuthContextType } from '@/types';
-import { mockUsers } from '@/data/mockData';
+import { authApi } from '@/api/services';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -10,16 +10,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return saved ? JSON.parse(saved) : null;
   });
 
-  const login = useCallback((email: string, password: string): boolean => {
-    const foundUser = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('pharma_user', JSON.stringify(foundUser));
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    try {
+      const userData = await authApi.login(email, password);
+
+      // Transform backend user data to frontend format
+      const transformedUser: User = {
+        id: userData.id.toString(),
+        nom: userData.nom,
+        prenom: userData.prenom,
+        email: userData.email,
+        password: '', // Don't store password
+        role: userData.role,
+        badgeId: userData.badge_id,
+      };
+
+      setUser(transformedUser);
+      localStorage.setItem('pharma_user', JSON.stringify(transformedUser));
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   }, []);
 
   const logout = useCallback(() => {

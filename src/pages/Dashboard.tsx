@@ -1,7 +1,6 @@
 import React from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockUsers } from '@/data/mockData';
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
 import { Package, AlertTriangle, XCircle, Users, TrendingUp, ShoppingCart } from 'lucide-react';
@@ -9,21 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { products, sales } = useData();
+  const { products, sales, users } = useData();
   const { user } = useAuth();
 
   const today = new Date();
-  
+
   const expiredProducts = products.filter(
     (p) => new Date(p.datePeremption) < today
   );
-  
+
   const soonToExpire = products.filter((p) => {
     const expDate = new Date(p.datePeremption);
     const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays >= 0 && diffDays <= 30;
   });
-  
+
   const outOfStock = products.filter(
     (p) => p.quantiteBoites === 0
   );
@@ -84,7 +83,7 @@ const Dashboard: React.FC = () => {
         />
         <StatCard
           title="Utilisateurs"
-          value={mockUsers.length}
+          value={users.length}
           icon={Users}
           variant="success"
           subtitle="Actifs"

@@ -1,34 +1,6 @@
 import { User, Product, Sale, ProductRequest } from '@/types';
 
-export const mockUsers: User[] = [
-  {
-    id: '1',
-    nom: 'Dupont',
-    prenom: 'Jean',
-    email: 'admin@pharmacie.fr',
-    password: 'admin123',
-    role: 'ADMIN',
-    badgeId: 'ADM-001',
-  },
-  {
-    id: '2',
-    nom: 'Martin',
-    prenom: 'Marie',
-    email: 'vendeur@pharmacie.fr',
-    password: 'vendeur123',
-    role: 'VENDEUR',
-    badgeId: 'VND-001',
-  },
-  {
-    id: '3',
-    nom: 'Bernard',
-    prenom: 'Pierre',
-    email: 'pierre@pharmacie.fr',
-    password: 'pierre123',
-    role: 'VENDEUR',
-    badgeId: 'VND-002',
-  },
-];
+export const mockUsers: User[] = [];
 
 const today = new Date();
 const addDays = (days: number) => {

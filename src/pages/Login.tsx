@@ -19,7 +19,7 @@ const Login: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -28,12 +28,16 @@ const Login: React.FC = () => {
       return;
     }
 
-    const success = login(email, password);
-    if (success) {
-      toast.success('Connexion réussie');
-      navigate('/dashboard');
-    } else {
-      setError('Email ou mot de passe incorrect');
+    try {
+      const success = await login(email, password);
+      if (success) {
+        toast.success('Connexion réussie');
+        navigate('/dashboard');
+      } else {
+        setError('Email ou mot de passe incorrect');
+      }
+    } catch (err) {
+      setError('Une erreur est survenue lors de la connexion');
     }
   };
 
@@ -65,7 +69,7 @@ const Login: React.FC = () => {
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -93,16 +97,6 @@ const Login: React.FC = () => {
               </Button>
             </form>
 
-            {/* Demo credentials */}
-            <div className="mt-6 p-4 rounded-lg bg-muted">
-              <p className="text-sm font-medium text-muted-foreground mb-2">
-                Comptes de démonstration :
-              </p>
-              <div className="space-y-1 text-sm">
-                <p><strong>Admin :</strong> admin@pharmacie.fr / admin123</p>
-                <p><strong>Vendeur :</strong> vendeur@pharmacie.fr / vendeur123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

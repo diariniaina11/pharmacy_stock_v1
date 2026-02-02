@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { categories, fournisseurs } from '@/data/mockData';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -34,14 +33,14 @@ import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Products: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct } = useData();
+  const { products, categories, fournisseurs, addProduct, updateProduct, deleteProduct } = useData();
   const { isAdmin } = useAuth();
-  
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     nom: '',
     categorie: '',
@@ -82,7 +81,7 @@ const Products: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nom || !formData.categorie || !formData.numeroLot) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -95,7 +94,7 @@ const Products: React.FC = () => {
       addProduct(formData);
       toast.success('Produit ajouté');
     }
-    
+
     setIsDialogOpen(false);
     resetForm();
   };
@@ -174,7 +173,7 @@ const Products: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            <SelectItem key={cat.nom} value={cat.nom}>{cat.nom}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -239,7 +238,7 @@ const Products: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {fournisseurs.map((f) => (
-                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                            <SelectItem key={f.nom} value={f.nom}>{f.nom}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -286,7 +285,7 @@ const Products: React.FC = () => {
           <SelectContent>
             <SelectItem value="all">Toutes les catégories</SelectItem>
             {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              <SelectItem key={cat.nom} value={cat.nom}>{cat.nom}</SelectItem>
             ))}
           </SelectContent>
         </Select>

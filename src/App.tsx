@@ -16,6 +16,8 @@ import Validation from "@/pages/Validation";
 import History from "@/pages/History";
 import NotFound from "./pages/NotFound";
 
+import PrivateRoute from "@/components/shared/PrivateRoute";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -28,15 +30,17 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route element={<MainLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/produits" element={<Products />} />
-                <Route path="/ventes" element={<Sales />} />
-                <Route path="/peremptions" element={<Expirations />} />
-                <Route path="/demandes" element={<Requests />} />
-                <Route path="/validation" element={<Validation />} />
-                <Route path="/historique" element={<History />} />
+              <Route element={<PrivateRoute />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/produits" element={<Products />} />
+                  <Route path="/ventes" element={<Sales />} />
+                  <Route path="/peremptions" element={<Expirations />} />
+                  <Route path="/demandes" element={<Requests />} />
+                  <Route path="/validation" element={<Validation />} />
+                  <Route path="/historique" element={<History />} />
+                </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
