@@ -14,7 +14,10 @@ export interface ApiFournisseur {
 export interface ApiUtilisateur {
     id: number;
     nom: string;
+    prenom: string;
     email: string | null;
+    role: 'ADMIN' | 'VENDEUR';
+    badge_id: string;
 }
 
 export interface ApiProduit {

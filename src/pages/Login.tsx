@@ -9,7 +9,7 @@ import { Pill, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login, user } = useAuth();
@@ -23,13 +23,13 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       setError('Veuillez remplir tous les champs');
       return;
     }
 
     try {
-      const success = await login(email, password);
+      const success = await login(identifier, password);
       if (success) {
         toast.success('Connexion réussie');
         navigate('/dashboard');
@@ -71,13 +71,13 @@ const Login: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Identifiant (Email ou Badge)</Label>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="votre@email.fr"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="votre email ou badge"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                 />
               </div>
 

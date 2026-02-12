@@ -12,21 +12,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const userData = await authApi.login(email, password);
+      const response = await authApi.login(email, password);
+      const apiUser = response.user;
+      const token = response.token;
 
       // Transform backend user data to frontend format
       const transformedUser: User = {
-        id: userData.id.toString(),
-        nom: userData.nom,
-        prenom: userData.prenom,
-        email: userData.email,
+        id: apiUser.id.toString(),
+        nom: apiUser.nom,
+        prenom: apiUser.prenom,
+        email: apiUser.email,
         password: '', // Don't store password
-        role: userData.role,
-        badgeId: userData.badge_id,
+        role: apiUser.role,
+        badgeId: apiUser.badge_id,
       };
 
       setUser(transformedUser);
       localStorage.setItem('pharma_user', JSON.stringify(transformedUser));
+      localStorage.setItem('pharma_token', token);
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -37,6 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('pharma_user');
+    localStorage.removeItem('pharma_token');
   }, []);
 
   const isAdmin = user?.role === 'ADMIN';

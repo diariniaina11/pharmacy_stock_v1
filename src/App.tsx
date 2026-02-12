@@ -11,7 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import Sales from "@/pages/Sales";
 import Expirations from "@/pages/Expirations";
-import Requests from "@/pages/Requests";
+import Requests from "@/pages/Requests"; 
 import Validation from "@/pages/Validation";
 import History from "@/pages/History";
 import NotFound from "./pages/NotFound";

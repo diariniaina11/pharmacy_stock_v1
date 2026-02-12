@@ -48,7 +48,7 @@ const transformRequest = (apiDemande: ApiDemandeProduit): ProductRequest => ({
 });
 
 // Helper: Transform API user to frontend User
-const transformUser = (apiUser: ApiUtilisateur & { role: 'ADMIN' | 'VENDEUR', badge_id: string, prenom: string }): User => ({
+const transformUser = (apiUser: ApiUtilisateur): User => ({
     id: apiUser.id.toString(),
     nom: apiUser.nom,
     prenom: apiUser.prenom,
@@ -81,12 +81,12 @@ export const fournisseursApi = {
 // Products API
 export const productsApi = {
     getAll: async (): Promise<Product[]> => {
-        const { data } = await apiClient.get<ApiProduit[]>('/produits');
+        const { data } = await apiClient.get<ApiProduit[]>('/products');
         return data.map(transformProduct);
     },
 
     getById: async (id: string): Promise<Product> => {
-        const { data } = await apiClient.get<ApiProduit>(`/produits/${id}`);
+        const { data } = await apiClient.get<ApiProduit>(`/products/${id}`);
         return transformProduct(data);
     },
 
@@ -102,7 +102,7 @@ export const productsApi = {
             prix: product.prix,
             description: product.description,
         };
-        const { data } = await apiClient.post<ApiProduit>('/produits', payload);
+        const { data } = await apiClient.post<ApiProduit>('/products', payload);
         return transformProduct(data);
     },
 
@@ -118,19 +118,19 @@ export const productsApi = {
         if (updates.prix) payload.prix = updates.prix;
         if (updates.description !== undefined) payload.description = updates.description;
 
-        const { data } = await apiClient.put<ApiProduit>(`/produits/${id}`, payload);
+        const { data } = await apiClient.put<ApiProduit>(`/products/${id}`, payload);
         return transformProduct(data);
     },
 
     delete: async (id: string): Promise<void> => {
-        await apiClient.delete(`/produits/${id}`);
+        await apiClient.delete(`/products/${id}`);
     },
 };
 
 // Sales API
 export const salesApi = {
     getAll: async (): Promise<Sale[]> => {
-        const { data } = await apiClient.get<ApiVente[]>('/ventes');
+        const { data } = await apiClient.get<ApiVente[]>('/sales');
         return data.map(transformSale);
     },
 
@@ -141,7 +141,7 @@ export const salesApi = {
             quantite_vendue: sale.quantiteVendue,
             date_vente: sale.date || new Date().toISOString(),
         };
-        const { data } = await apiClient.post<ApiVente>('/ventes', payload);
+        const { data } = await apiClient.post<ApiVente>('/sales', payload);
         return transformSale(data);
     },
 };
@@ -149,7 +149,7 @@ export const salesApi = {
 // Requests API
 export const requestsApi = {
     getAll: async (): Promise<ProductRequest[]> => {
-        const { data } = await apiClient.get<ApiDemandeProduit[]>('/demandes-produits');
+        const { data } = await apiClient.get<ApiDemandeProduit[]>('/product-requests');
         return data.map(transformRequest);
     },
 
@@ -160,12 +160,12 @@ export const requestsApi = {
             quantite_demandee: request.quantiteDemandee,
             commentaire: request.commentaire,
         };
-        const { data } = await apiClient.post<ApiDemandeProduit>('/demandes-produits', payload);
+        const { data } = await apiClient.post<ApiDemandeProduit>('/product-requests', payload);
         return transformRequest(data);
     },
 
     updateStatus: async (id: string, status: 'VALIDE' | 'REFUSE'): Promise<ProductRequest> => {
-        const { data } = await apiClient.put<ApiDemandeProduit>(`/demandes-produits/${id}`, { status });
+        const { data } = await apiClient.put<ApiDemandeProduit>(`/product-requests/${id}`, { status });
         return transformRequest(data);
     },
 };
@@ -180,14 +180,8 @@ export const usersApi = {
 
 // Auth API
 export const authApi = {
-    login: async (email: string, _password: string) => {
-        const { data } = await apiClient.get<any[]>('/users');
-        const user = data.find((u: any) => u.email === email);
-
-        if (!user) {
-            throw new Error('Identifiants incorrects');
-        }
-
-        return user;
+    login: async (email: string, password: string) => {
+        const { data } = await apiClient.post('/login', { email, password });
+        return data; // returns { user, token, message }
     },
 };
