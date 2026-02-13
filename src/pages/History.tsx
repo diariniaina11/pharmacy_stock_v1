@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,13 +15,14 @@ import { History as HistoryIcon, ShoppingCart } from 'lucide-react';
 
 const History: React.FC = () => {
   const { sales } = useData();
-  const { user, isAdmin } = useAuth();
-  
+  const isAdmin = true;
+  const user = { id: 'admin' };
+
   const [search, setSearch] = useState('');
 
   const filteredSales = useMemo(() => {
     let filtered = isAdmin ? sales : sales.filter((s) => s.userId === user?.id);
-    
+
     if (search) {
       filtered = filtered.filter(
         (sale) =>
@@ -30,7 +30,7 @@ const History: React.FC = () => {
           sale.userName.toLowerCase().includes(search.toLowerCase())
       );
     }
-    
+
     return filtered.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );

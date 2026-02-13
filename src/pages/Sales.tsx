@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +32,8 @@ import { toast } from 'sonner';
 
 const Sales: React.FC = () => {
   const { products, sales, addSale } = useData();
-  const { user } = useAuth();
-  
+  const user = { id: 'admin', prenom: 'Admin', nom: 'System' };
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -44,7 +43,7 @@ const Sales: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedProduct || quantity <= 0) {
       toast.error('Veuillez sélectionner un produit et une quantité valide');
       return;

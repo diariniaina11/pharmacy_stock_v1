@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, Sale, ProductRequest, User } from '@/types';
-import { productsApi, salesApi, requestsApi, categoriesApi, fournisseursApi, usersApi } from '@/api/services';
-import { ApiCategory, ApiFournisseur } from '@/api/types';
+import { Product, Sale, ProductRequest, User, ApiCategory, ApiFournisseur } from '@/types';
+// import { productsApi, salesApi, requestsApi, categoriesApi, fournisseursApi, usersApi } from '@/api/services';
+// import { ApiCategory, ApiFournisseur } from '@/api/types';
 
 interface DataContextType {
   products: Product[];
@@ -38,21 +38,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       setError(null);
 
-      const [productsData, salesData, requestsData, categoriesData, fournisseursData, usersData] = await Promise.all([
-        productsApi.getAll(),
-        salesApi.getAll(),
-        requestsApi.getAll(),
-        categoriesApi.getAll(),
-        fournisseursApi.getAll(),
-        usersApi.getAll(),
-      ]);
-
-      setProducts(productsData);
-      setSales(salesData);
-      setRequests(requestsData);
-      setCategories(categoriesData);
-      setFournisseurs(fournisseursData);
-      setUsers(usersData);
+      // API calls stubbed out
+      setProducts([]);
+      setSales([]);
+      setRequests([]);
+      setCategories([]);
+      setFournisseurs([]);
+      setUsers([]);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load data from server');
@@ -67,6 +59,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
+      console.warn('API call stubbed: addProduct');
       // Find category and fournisseur IDs
       const category = categories.find(c => c.nom === product.categorie);
       const fournisseur = fournisseurs.find(f => f.nom === product.fournisseur);
@@ -75,8 +68,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Category or Fournisseur not found');
       }
 
-      const newProduct = await productsApi.create(product, category.id, fournisseur.id);
-      setProducts((prev) => [...prev, newProduct]);
+      // const newProduct = await productsApi.create(product, category.id, fournisseur.id);
+      // setProducts((prev) => [...prev, newProduct]);
     } catch (err) {
       console.error('Error adding product:', err);
       throw err;
@@ -85,6 +78,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     try {
+      console.warn('API call stubbed: updateProduct');
       // Find category and fournisseur IDs if they're being updated
       let categorieId: number | undefined;
       let fournisseurId: number | undefined;
@@ -116,8 +110,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fournisseurId = fournisseur?.id;
       }
 
-      const updatedProduct = await productsApi.update(id, updates, categorieId, fournisseurId);
-      setProducts((prev) => prev.map((p) => (p.id === id ? updatedProduct : p)));
+      // const updatedProduct = await productsApi.update(id, updates, categorieId, fournisseurId);
+      // setProducts((prev) => prev.map((p) => (p.id === id ? updatedProduct : p)));
     } catch (err) {
       console.error('Error updating product:', err);
       throw err;
@@ -126,7 +120,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteProduct = async (id: string) => {
     try {
-      await productsApi.delete(id);
+      console.warn('API call stubbed: deleteProduct');
+      // await productsApi.delete(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error('Error deleting product:', err);
@@ -136,8 +131,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addSale = async (sale: Omit<Sale, 'id'>) => {
     try {
-      const newSale = await salesApi.create(sale);
-      setSales((prev) => [...prev, newSale]);
+      console.warn('API call stubbed: addSale');
+      // const newSale = await salesApi.create(sale);
+      // setSales((prev) => [...prev, newSale]);
 
       // Update product stock locally
       const product = products.find((p) => p.id === sale.productId);
@@ -158,8 +154,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addRequest = async (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => {
     try {
-      const newRequest = await requestsApi.create(request);
-      setRequests((prev) => [...prev, newRequest]);
+      console.warn('API call stubbed: addRequest');
+      // const newRequest = await requestsApi.create(request);
+      // setRequests((prev) => [...prev, newRequest]);
     } catch (err) {
       console.error('Error adding request:', err);
       throw err;
@@ -168,8 +165,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateRequestStatus = async (id: string, status: 'VALIDE' | 'REFUSE') => {
     try {
-      const updatedRequest = await requestsApi.updateStatus(id, status);
-      setRequests((prev) => prev.map((r) => (r.id === id ? updatedRequest : r)));
+      console.warn('API call stubbed: updateRequestStatus');
+      // const updatedRequest = await requestsApi.updateStatus(id, status);
+      // setRequests((prev) => prev.map((r) => (r.id === id ? updatedRequest : r)));
 
       if (status === 'VALIDE') {
         const request = requests.find((r) => r.id === id);

@@ -1,44 +1,71 @@
-import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import AuthContext from '@/context/AuthProvider';
+import axios from '@/api/axios';
+
+const LOGIN_URL = '/users';
+
 
 const Login: React.FC = () => {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login, user } = useAuth();
-  const navigate = useNavigate();
+  const { setAuth } = useContext(AuthContext);
+  // ✅ CORRECTION 1: Typage correct des refs
+  const userRef = useRef<HTMLInputElement>(null);
+  const errRef = useRef<HTMLParagraphElement>(null);
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const [user, setUser] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [errMsg, setErrMsg] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // ✅ CORRECTION 2: Vérification + ref utilisée
+  useEffect(() => {
+    if (userRef.current) {
+      userRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    setErrMsg('');
+  }, [user, pwd]);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrMsg('');
 
-    if (!identifier || !password) {
-      setError('Veuillez remplir tous les champs');
+    if (!user || !pwd) {
+      setErrMsg('Veuillez remplir tous les champs');
+      if (userRef.current) {
+        userRef.current.focus();
+      }
       return;
     }
-
     try {
-      const success = await login(identifier, password);
-      if (success) {
-        toast.success('Connexion réussie');
+      const response = await axios.get(`${LOGIN_URL}/${encodeURI(user)}`);
+
+      if (response.data.password === pwd) {
+        setAuth({ user, pwd });
         navigate('/dashboard');
-      } else {
-        setError('Email ou mot de passe incorrect');
       }
+      setUser("");
+      setPwd("");
     } catch (err) {
-      setError('Une erreur est survenue lors de la connexion');
+      console.log(err);
+      setErrMsg("Utilisateur n'existe pas");
     }
+
+    // TODO: Ajouter l'appel API réel ici
+    toast.success('Connexion réussie');
+    //success ? navigate('/dashboard') : true;
+
   };
 
   return (
@@ -63,21 +90,25 @@ const Login: React.FC = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
+              {errMsg && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   <AlertCircle className="w-4 h-4" />
-                  {error}
+                  {errMsg}
                 </div>
               )}
 
+              {/* ✅ CORRECTION 3: Ajout de la ref à l'input */}
               <div className="space-y-2">
                 <Label htmlFor="email">Identifiant (Email ou Badge)</Label>
                 <Input
+                  ref={userRef}  // ← LIEN CRUCIAL manquant !
                   id="email"
                   type="text"
                   placeholder="votre email ou badge"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  value={user}
+                  onChange={(e) => setUser(e.target.value)}
+                  autoComplete="username"
+                  required
                 />
               </div>
 
@@ -87,8 +118,10 @@ const Login: React.FC = () => {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={pwd}
+                  onChange={(e) => setPwd(e.target.value)}
+                  autoComplete="current-password"
+                  required
                 />
               </div>
 
@@ -96,7 +129,12 @@ const Login: React.FC = () => {
                 Se connecter
               </Button>
             </form>
-
+            <p className="text-center text-sm text-muted-foreground mt-[20px]">
+              Pas de compte ?{' '}
+              <Link to="/register" className="text-primary hover:underline ">
+                S'inscrire
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>

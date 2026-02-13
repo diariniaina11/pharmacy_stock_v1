@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,8 +33,9 @@ import { toast } from 'sonner';
 
 const Requests: React.FC = () => {
   const { products, requests, addRequest } = useData();
-  const { user, isAdmin } = useAuth();
-  
+  const isAdmin = true;
+  const user = { id: 'admin', prenom: 'Admin', nom: 'System' };
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     productId: '',
@@ -51,7 +51,7 @@ const Requests: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const productName = formData.productId
       ? products.find((p) => p.id === formData.productId)?.nom || formData.productNom
       : formData.productNom;

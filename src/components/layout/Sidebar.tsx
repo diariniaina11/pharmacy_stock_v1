@@ -1,6 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -9,20 +8,14 @@ import {
   FileText,
   CheckSquare,
   History,
-  LogOut,
   Pill,
   User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sidebar: React.FC = () => {
-  const { user, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const isAdmin = true;
+  const user = { prenom: 'Admin', nom: 'System' };
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -30,9 +23,7 @@ const Sidebar: React.FC = () => {
     { to: '/ventes', icon: ShoppingCart, label: 'Ventes' },
     { to: '/peremptions', icon: AlertTriangle, label: 'Péremptions' },
     { to: '/demandes', icon: FileText, label: 'Demandes' },
-    ...(isAdmin
-      ? [{ to: '/validation', icon: CheckSquare, label: 'Validation' }]
-      : []),
+    { to: '/validation', icon: CheckSquare, label: 'Validation' },
     { to: '/historique', icon: History, label: 'Historique' },
   ];
 
@@ -74,26 +65,19 @@ const Sidebar: React.FC = () => {
 
       {/* User info */}
       <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 mb-4 px-2">
+        <div className="flex items-center gap-3 px-2">
           <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
             <User className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm truncate">
-              {user?.prenom} {user?.nom}
+              {user.prenom} {user.nom}
             </p>
             <p className="text-xs text-sidebar-foreground/70">
-              {user?.role === 'ADMIN' ? 'Administrateur' : 'Vendeur'}
+              Administrateur
             </p>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Déconnexion</span>
-        </button>
       </div>
     </aside>
   );

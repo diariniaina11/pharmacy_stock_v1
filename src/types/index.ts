@@ -51,3 +51,13 @@ export interface AuthContextType {
   logout: () => void;
   isAdmin: boolean;
 }
+
+export interface ApiCategory {
+  id: number;
+  nom: string;
+}
+
+export interface ApiFournisseur {
+  id: number;
+  nom: string;
+}

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ import { toast } from 'sonner';
 
 const Products: React.FC = () => {
   const { products, categories, fournisseurs, addProduct, updateProduct, deleteProduct } = useData();
-  const { isAdmin } = useAuth();
+  const isAdmin = true;
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
 import { Package, AlertTriangle, XCircle, Users, TrendingUp, ShoppingCart } from 'lucide-react';
@@ -9,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const Dashboard: React.FC = () => {
   const { products, sales, users } = useData();
-  const { user } = useAuth();
+  const user = { prenom: 'Admin' };
 
   const today = new Date();
 
