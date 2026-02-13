@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import AuthContext from '@/context/AuthProvider';
 import axios from '@/api/axios';
+import md5 from 'md5';
 
 const LOGIN_URL = '/users';
 
@@ -50,20 +51,25 @@ const Login: React.FC = () => {
     }
     try {
       const response = await axios.get(`${LOGIN_URL}/${encodeURI(user)}`);
+      let hashedPwd = md5(pwd);
+      if (response.data.password === hashedPwd) {
+        toast.success('Connexion réussie');
 
-      if (response.data.password === pwd) {
-        setAuth({ user, pwd });
+        setAuth({ user, hashedPwd });
         navigate('/dashboard');
+      } else {
+        setErrMsg("Mot de passe incorrect");
+        toast.error('Mot de passe incorrect');
+
       }
-      setUser("");
-      setPwd("");
     } catch (err) {
       console.log(err);
       setErrMsg("Utilisateur n'existe pas");
+      toast.error('Utilisateur n\'existe pas');
+
     }
 
     // TODO: Ajouter l'appel API réel ici
-    toast.success('Connexion réussie');
     //success ? navigate('/dashboard') : true;
 
   };

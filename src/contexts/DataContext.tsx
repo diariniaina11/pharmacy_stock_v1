@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, Sale, ProductRequest, User, ApiCategory, ApiFournisseur } from '@/types';
-// import { productsApi, salesApi, requestsApi, categoriesApi, fournisseursApi, usersApi } from '@/api/services';
-// import { ApiCategory, ApiFournisseur } from '@/api/types';
+import api from '@/api/axios';
 
 interface DataContextType {
   products: Product[];
@@ -38,16 +37,83 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       setError(null);
 
-      // API calls stubbed out
-      setProducts([]);
+      // Fetch products from API
+      const productsRes = await api.get('/products');
+      const mappedProducts: Product[] = productsRes.data.map((p: any) => ({
+        id: String(p.id),
+        nom: p.nom,
+        categorie: p.category?.nom || '',
+        numeroLot: p.numero_lot,
+        datePeremption: p.date_peremption,
+        quantiteBoites: p.quantite_boites,
+        quantiteUnites: p.quantite_unites,
+        prix: parseFloat(p.prix),
+        fournisseur: p.fournisseur?.nom || '',
+        description: p.description || '',
+      }));
+      setProducts(mappedProducts);
+
+      //Fetch categories from API
+      const categoriesRes = await api.get('/categories');
+      const mappedCategories: ApiCategory[] = categoriesRes.data.map((c: any) => ({
+        id: String(c.id),
+        nom: c.nom,
+      }));
+      setCategories(mappedCategories);
+
+      //Fetch fournisseurs from API
+      const fournisseursRes = await api.get('/fournisseurs');
+      const mappedFournisseurs: ApiFournisseur[] = fournisseursRes.data.map((f: any) => ({
+        id: String(f.id),
+        nom: f.nom,
+      }));
+      setFournisseurs(mappedFournisseurs);
+
+      //Fetch users from API
+      const usersRes = await api.get('/users');
+      const mappedUsers: User[] = usersRes.data.map((u: any) => ({
+        id: String(u.id),
+        nom: u.nom,
+        prenom: u.prenom,
+        email: u.email,
+        role: u.role
+      }));
+      setUsers(mappedUsers);
+
+      //Fetch sales from API
+      /*
+      */
+      const salesRes = await api.get('/sales');
+      const mappedSales: Sale[] = salesRes.data.map((s: any) => ({
+        id: String(s.id),
+        product_id: String(s.product_id),
+        user_id: String(s.user_id),
+        quantite_vendue: s.quantite_vendue,
+        date_vente: s.date_vente,
+        product: s.product,
+        user: s.user,
+      }));
+      setSales(mappedSales);
+
+      //
+
+      // Extract unique categories and fournisseurs from products response
+      const categoriesMap = new Map<number, ApiCategory>();
+      const fournisseursMap = new Map<number, ApiFournisseur>();
+      productsRes.data.forEach((p: any) => {
+        if (p.category) categoriesMap.set(p.category.id, p.category);
+        if (p.fournisseur) fournisseursMap.set(p.fournisseur.id, p.fournisseur);
+      });
+      setCategories(Array.from(categoriesMap.values()));
+      setFournisseurs(Array.from(fournisseursMap.values()));
+
+      // Other API calls still stubbed
       setSales([]);
       setRequests([]);
-      setCategories([]);
-      setFournisseurs([]);
       setUsers([]);
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Failed to load data from server');
+      setError('Erreur lors du chargement des données du serveur');
     } finally {
       setIsLoading(false);
     }
