@@ -56,7 +56,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       //Fetch categories from API
       const categoriesRes = await api.get('/categories');
       const mappedCategories: ApiCategory[] = categoriesRes.data.map((c: any) => ({
-        id: String(c.id),
+        id: c.id,
         nom: c.nom,
       }));
       setCategories(mappedCategories);
@@ -64,7 +64,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       //Fetch fournisseurs from API
       const fournisseursRes = await api.get('/fournisseurs');
       const mappedFournisseurs: ApiFournisseur[] = fournisseursRes.data.map((f: any) => ({
-        id: String(f.id),
+        id: f.id,
         nom: f.nom,
       }));
       setFournisseurs(mappedFournisseurs);
@@ -81,36 +81,34 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUsers(mappedUsers);
 
       //Fetch sales from API
-      /*
-      */
       const salesRes = await api.get('/sales');
       const mappedSales: Sale[] = salesRes.data.map((s: any) => ({
         id: String(s.id),
-        product_id: String(s.product_id),
-        user_id: String(s.user_id),
-        quantite_vendue: s.quantite_vendue,
-        date_vente: s.date_vente,
-        product: s.product,
-        user: s.user,
+        productId: String(s.product_id),
+        productNom: s.product?.nom || 'Produit inconnu',
+        quantiteVendue: s.quantite_vendue,
+        date: s.date_vente,
+        userId: String(s.user_id),
+        userName: s.user ? `${s.user.prenom} ${s.user.nom}` : 'Utilisateur inconnu',
       }));
       setSales(mappedSales);
 
-      //
+      //Fetch product-requests
+      const requestsRes = await api.get('/product-requests');
+      const mappedRequests: ProductRequest[] = requestsRes.data.map((r: any) => ({
+        id: String(r.id),
+        productId: String(r.product_id),
+        productNom: r.product?.nom || 'Produit inconnu',
+        quantiteDemandee: r.quantite_demandee,
+        commentaire: r.commentaire || '',
+        status: r.status,
+        dateCreation: r.date_creation,
+        userId: String(r.user_id),
+        userName: r.user ? `${r.user.prenom} ${r.user.nom}` : 'Utilisateur inconnu',
+      }));
+      setRequests(mappedRequests);
 
-      // Extract unique categories and fournisseurs from products response
-      const categoriesMap = new Map<number, ApiCategory>();
-      const fournisseursMap = new Map<number, ApiFournisseur>();
-      productsRes.data.forEach((p: any) => {
-        if (p.category) categoriesMap.set(p.category.id, p.category);
-        if (p.fournisseur) fournisseursMap.set(p.fournisseur.id, p.fournisseur);
-      });
-      setCategories(Array.from(categoriesMap.values()));
-      setFournisseurs(Array.from(fournisseursMap.values()));
-
-      // Other API calls still stubbed
-      setSales([]);
-      setRequests([]);
-      setUsers([]);
+      // Categories and Fournisseurs are already fetched above
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Erreur lors du chargement des données du serveur');

@@ -7,7 +7,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { products, sales, users } = useData();
+  const {
+    products,
+    sales,
+    requests,
+    categories,
+    fournisseurs,
+    users,
+    isLoading,
+    error,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addSale,
+    addRequest,
+    updateRequestStatus,
+    refreshData: fetchData,
+  } = useData();
   const user = { prenom: 'Admin' };
 
   const today = new Date();
