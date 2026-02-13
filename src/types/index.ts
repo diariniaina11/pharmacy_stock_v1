@@ -14,13 +14,17 @@ export interface Product {
   id: string;
   nom: string;
   categorie: string;
+  categorie_id: number;
   numeroLot: string;
   datePeremption: string;
   quantiteBoites: number;
   quantiteUnites: number;
   prix: number;
   fournisseur: string;
+  fournisseur_id: number;
   description: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Sale {

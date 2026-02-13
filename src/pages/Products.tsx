@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+
 import {
   Select,
   SelectContent,
@@ -30,9 +31,26 @@ import {
 } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import { toast } from 'sonner';
+import { Product } from '@/types';
 
 const Products: React.FC = () => {
-  const { products, categories, fournisseurs, addProduct, updateProduct, deleteProduct } = useData();
+  const {
+    products,
+    sales,
+    requests,
+    categories,
+    fournisseurs,
+    users,
+    isLoading,
+    error,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addSale,
+    addRequest,
+    updateRequestStatus,
+    refreshData: fetchData,
+  } = useData();
   const isAdmin = true;
 
   const [search, setSearch] = useState('');
@@ -42,14 +60,16 @@ const Products: React.FC = () => {
 
   const [formData, setFormData] = useState({
     nom: '',
-    categorie: '',
-    numeroLot: '',
-    datePeremption: '',
-    quantiteBoites: 0,
-    quantiteUnites: 0,
+    categorie_id: 0,
+    fournisseur_id: 0,
+    numero_lot: '',
+    date_peremption: '',
+    quantite_boites: 0,
+    quantite_unites: 0,
     prix: 0,
-    fournisseur: '',
     description: '',
+    created_at: '',
+    updated_at: ''
   });
 
   const filteredProducts = useMemo(() => {
@@ -66,49 +86,81 @@ const Products: React.FC = () => {
   const resetForm = () => {
     setFormData({
       nom: '',
-      categorie: '',
-      numeroLot: '',
-      datePeremption: '',
-      quantiteBoites: 0,
-      quantiteUnites: 0,
+      categorie_id: 0,
+      fournisseur_id: 0,
+      numero_lot: '',
+      date_peremption: '',
+      quantite_boites: 0,
+      quantite_unites: 0,
       prix: 0,
-      fournisseur: '',
       description: '',
+      created_at: '',
+      updated_at: ''
     });
     setEditingProduct(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nom || !formData.categorie || !formData.numeroLot) {
+    // 1. Validation de base côté client
+    if (!formData.nom || !formData.categorie_id || !formData.numero_lot) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    if (editingProduct) {
-      updateProduct(editingProduct, formData);
-      toast.success('Produit mis à jour');
-    } else {
-      addProduct(formData);
-      toast.success('Produit ajouté');
+    try {
+      // 2. Préparation des données pour l'API Laravel (Format Snake Case)
+      // On ne garde que ce que le validateur du Controller Laravel attend
+      const apiData = {
+        nom: formData.nom,
+        categorie_id: formData.categorie_id,
+        fournisseur_id: formData.fournisseur_id,
+        numero_lot: formData.numero_lot,
+        date_peremption: formData.date_peremption,
+        quantite_boites: formData.quantite_boites,
+        quantite_unites: formData.quantite_unites,
+        prix: formData.prix,
+        description: formData.description,
+      };
+
+      // 3. Appel de la méthode appropriée via le DataContext
+      if (editingProduct) {
+        await updateProduct(editingProduct, apiData);
+        toast.success('Produit mis à jour');
+      } else {
+        await addProduct(apiData);
+        toast.success('Produit ajouté');
+      }
+
+      // 4. Fermeture et réinitialisation en cas de succès
+      setIsDialogOpen(false);
+      resetForm();
+
+    } catch (err: any) {
+      // 5. Gestion des erreurs (notamment la 422 de Laravel)
+      console.error("Erreur lors de l'enregistrement:", err);
+      if (err.response?.status === 422) {
+        const messages = Object.values(err.response.data.errors).flat();
+        toast.error(`Erreur de validation: ${messages[0]}`);
+      } else {
+        toast.error("Une erreur est survenue lors de l'enregistrement");
+      }
     }
-
-    setIsDialogOpen(false);
-    resetForm();
   };
-
   const handleEdit = (product: typeof products[0]) => {
     setFormData({
       nom: product.nom,
-      categorie: product.categorie,
-      numeroLot: product.numeroLot,
-      datePeremption: product.datePeremption,
-      quantiteBoites: product.quantiteBoites,
-      quantiteUnites: product.quantiteUnites,
+      categorie_id: product.categorie_id,
+      fournisseur_id: product.fournisseur_id,
+      numero_lot: product.numeroLot,
+      date_peremption: product.datePeremption,
+      quantite_boites: product.quantiteBoites,
+      quantite_unites: product.quantiteUnites,
       prix: product.prix,
-      fournisseur: product.fournisseur,
       description: product.description,
+      created_at: product.createdAt || '',
+      updated_at: product.updatedAt || ''
     });
     setEditingProduct(product.id);
     setIsDialogOpen(true);
@@ -164,15 +216,15 @@ const Products: React.FC = () => {
                     <div className="space-y-2">
                       <Label htmlFor="categorie">Catégorie *</Label>
                       <Select
-                        value={formData.categorie}
-                        onValueChange={(value) => setFormData({ ...formData, categorie: value })}
+                        value={formData.categorie_id ? String(formData.categorie_id) : ""}
+                        onValueChange={(value) => setFormData({ ...formData, categorie_id: parseInt(value) })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat.nom} value={cat.nom}>{cat.nom}</SelectItem>
+                            <SelectItem key={cat.id} value={String(cat.id)}>{cat.nom}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -181,8 +233,8 @@ const Products: React.FC = () => {
                       <Label htmlFor="numeroLot">Numéro de lot *</Label>
                       <Input
                         id="numeroLot"
-                        value={formData.numeroLot}
-                        onChange={(e) => setFormData({ ...formData, numeroLot: e.target.value })}
+                        value={formData.numero_lot}
+                        onChange={(e) => setFormData({ ...formData, numero_lot: e.target.value })}
                         placeholder="Ex: LOT-2024-001"
                       />
                     </div>
@@ -191,8 +243,8 @@ const Products: React.FC = () => {
                       <Input
                         id="datePeremption"
                         type="date"
-                        value={formData.datePeremption}
-                        onChange={(e) => setFormData({ ...formData, datePeremption: e.target.value })}
+                        value={formData.date_peremption}
+                        onChange={(e) => setFormData({ ...formData, date_peremption: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -201,8 +253,8 @@ const Products: React.FC = () => {
                         id="quantiteBoites"
                         type="number"
                         min="0"
-                        value={formData.quantiteBoites}
-                        onChange={(e) => setFormData({ ...formData, quantiteBoites: parseInt(e.target.value) || 0 })}
+                        value={formData.quantite_boites}
+                        onChange={(e) => setFormData({ ...formData, quantite_boites: parseInt(e.target.value) || 0 })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -211,8 +263,8 @@ const Products: React.FC = () => {
                         id="quantiteUnites"
                         type="number"
                         min="0"
-                        value={formData.quantiteUnites}
-                        onChange={(e) => setFormData({ ...formData, quantiteUnites: parseInt(e.target.value) || 0 })}
+                        value={formData.quantite_unites}
+                        onChange={(e) => setFormData({ ...formData, quantite_unites: parseInt(e.target.value) || 0 })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -229,15 +281,15 @@ const Products: React.FC = () => {
                     <div className="space-y-2">
                       <Label htmlFor="fournisseur">Fournisseur</Label>
                       <Select
-                        value={formData.fournisseur}
-                        onValueChange={(value) => setFormData({ ...formData, fournisseur: value })}
+                        value={formData.fournisseur_id ? String(formData.fournisseur_id) : ""}
+                        onValueChange={(value) => setFormData({ ...formData, fournisseur_id: parseInt(value) })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
                           {fournisseurs.map((f) => (
-                            <SelectItem key={f.nom} value={f.nom}>{f.nom}</SelectItem>
+                            <SelectItem key={f.id} value={String(f.id)}>{f.nom}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
