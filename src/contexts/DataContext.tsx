@@ -14,7 +14,9 @@ interface DataContextType {
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  updateSale: (id: string, updates: any) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id'>) => Promise<void>;
+  deleteSale: (id: string) => Promise<void>;
   addRequest: (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => Promise<void>;
   updateRequestStatus: (id: string, status: 'VALIDE' | 'REFUSE') => Promise<void>;
   refreshData: () => Promise<void>;
@@ -195,6 +197,27 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const deleteSale = async (id: string) => {
+    try {
+      await api.delete(`/sales/${id}`);
+      setSales((prev) => prev.filter((s) => s.id !== id));
+      await fetchData();
+    } catch (err) {
+      console.error('Error deleting sale:', err);
+      throw err;
+    }
+  };
+
+  const updateSale = async (id: string, updates: any) => {
+    try {
+      await api.put(`/sales/${id}`, updates);
+      await fetchData();
+    } catch (err) {
+      console.error('Error updating sale:', err);
+      throw err;
+    }
+  };
+
   const addRequest = async (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => {
     try {
       console.warn('API call stubbed: addRequest');
@@ -247,7 +270,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addProduct,
         updateProduct,
         deleteProduct,
+        updateSale,
         addSale,
+        deleteSale,
         addRequest,
         updateRequestStatus,
         refreshData: fetchData,
