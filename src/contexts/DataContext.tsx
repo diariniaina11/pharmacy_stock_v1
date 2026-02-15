@@ -163,6 +163,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addSale = async (sale: Omit<Sale, 'id'>) => {
 
     try {
+      // Ensure product exists locally and has enough stock before calling API
+      const productLocal = products.find((p) => p.id === String(sale.product_id));
+      if (!productLocal) {
+        throw new Error('Produit non trouvé');
+      }
+      if (productLocal.quantiteBoites < (sale as any).quantite_vendue) {
+        throw new Error('Stock insuffisant');
+      }
+
       const response = await api.post('/sales', sale);
 
       const created = response.data;
@@ -199,8 +208,26 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteSale = async (id: string) => {
     try {
+      // find the sale locally to adjust product stock immediately
+      const existingSale = sales.find((s) => s.id === id);
+
       await api.delete(`/sales/${id}`);
+
+      // remove sale from local state
       setSales((prev) => prev.filter((s) => s.id !== id));
+
+      // if we had the sale, restore the product quantity locally
+      if (existingSale) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === existingSale.productId
+              ? { ...p, quantiteBoites: p.quantiteBoites + existingSale.quantiteVendue }
+              : p
+          )
+        );
+      }
+
+      // refresh from server to ensure consistency
       await fetchData();
     } catch (err) {
       console.error('Error deleting sale:', err);
@@ -210,7 +237,49 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateSale = async (id: string, updates: any) => {
     try {
-      await api.put(`/sales/${id}`, updates);
+      // find previous sale to compute stock delta and validate
+      const prev = sales.find((s) => s.id === id);
+      if (!prev) throw new Error('Vente introuvable');
+
+      const requestedNewQty = updates.quantite_vendue !== undefined ? Number(updates.quantite_vendue) : prev.quantiteVendue;
+
+      // find related product locally
+      const productLocal = products.find((p) => p.id === String(prev.productId));
+      if (!productLocal) throw new Error('Produit introuvable');
+
+      // if increasing sold quantity, ensure enough stock
+      const increase = requestedNewQty - prev.quantiteVendue;
+      if (increase > 0 && productLocal.quantiteBoites < increase) {
+        throw new Error('Stock insuffisant pour cette modification');
+      }
+
+      const response = await api.put(`/sales/${id}`, updates);
+      const updated = response.data;
+
+      // map updated sale to frontend shape
+      const mappedSale: Sale = {
+        id: String(updated.id),
+        productId: String(updated.product_id),
+        productNom: updated.product?.nom || 'Produit inconnu',
+        quantiteVendue: updated.quantite_vendue,
+        date: updated.date_vente,
+        userId: String(updated.user_id),
+        userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
+      };
+
+      // update sales list locally
+      setSales((prevList) => prevList.map((s) => (s.id === id ? mappedSale : s)));
+
+      // adjust product stock locally based on difference between previous and updated quantities
+      const productId = String(updated.product_id);
+      const delta = prev.quantiteVendue - mappedSale.quantiteVendue; // positive => increase stock, negative => decrease
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p.id === productId ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites + delta) } : p
+        )
+      );
+
+      // refresh from server to ensure full consistency
       await fetchData();
     } catch (err) {
       console.error('Error updating sale:', err);
