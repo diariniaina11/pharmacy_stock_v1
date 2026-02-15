@@ -56,6 +56,9 @@ const Login: React.FC = () => {
         toast.success('Connexion réussie');
 
         setAuth({ user, hashedPwd });
+        console.log(response.data);
+        
+        localStorage.setItem('user', JSON.stringify(response.data));
         navigate('/dashboard');
       } else {
         setErrMsg("Mot de passe incorrect");

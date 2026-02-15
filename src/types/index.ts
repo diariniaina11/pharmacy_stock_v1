@@ -1,7 +1,7 @@
 export type UserRole = 'ADMIN' | 'VENDEUR';
 
 export interface User {
-  id: string;
+  id?: string;
   nom: string;
   prenom: string;
   email: string;
@@ -29,12 +29,12 @@ export interface Product {
 
 export interface Sale {
   id: string;
-  productId: string;
-  productNom: string;
-  quantiteVendue: number;
-  date: string;
-  userId: string;
-  userName: string;
+  product_id: string;
+  product_nom: string;
+  quantite_vendue: number;
+  date_vente: string;
+  product: Product;
+  user: User;
 }
 
 export interface ProductRequest {

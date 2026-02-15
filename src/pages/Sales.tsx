@@ -4,6 +4,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
 import {
   Select,
   SelectContent,
@@ -29,10 +30,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { User } from '@/types';
+import axios from '@/api/axios';
 
 const Sales: React.FC = () => {
   const { products, sales, addSale } = useData();
-  const user = { id: 'admin', prenom: 'Admin', nom: 'System' };
+  
+  const user:User = JSON.parse(localStorage.getItem('user') || '{}');
+  
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -41,7 +46,7 @@ const Sales: React.FC = () => {
   const availableProducts = products.filter((p) => p.quantiteBoites > 0);
   const selectedProductData = products.find((p) => p.id === selectedProduct);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedProduct || quantity <= 0) {
@@ -59,19 +64,46 @@ const Sales: React.FC = () => {
       return;
     }
 
-    addSale({
-      productId: selectedProduct,
-      productNom: selectedProductData.nom,
-      quantiteVendue: quantity,
-      date: new Date().toISOString().split('T')[0],
-      userId: user!.id,
-      userName: `${user!.prenom} ${user!.nom}`,
-    });
+    if (!user || !user.id) {
+      toast.error('Utilisateur non connecté');
+      return;
+    }
 
-    toast.success('Vente enregistrée');
-    setIsDialogOpen(false);
-    setSelectedProduct('');
-    setQuantity(1);
+    /*
+    forme de l'objet a envoyer   
+    export interface Sale {
+      productId: string;
+      productNom: string;
+      quantiteVendue: number;
+      date: string;
+      userId: string;
+      userName: string;
+    }
+    */
+    
+    try {
+      const response = await axios.get(`/products/${selectedProduct}`);
+      const sale = {
+        product_id: selectedProduct,
+        product_nom: selectedProductData.nom,
+        quantite_vendue: quantity,
+        date_vente: new Date().toISOString().split('T')[0],
+        user_id: user.id,
+        user: user,
+        product: response.data,
+      };
+
+      await addSale(sale);
+
+      toast.success('Vente enregistrée');
+      setIsDialogOpen(false);
+      setSelectedProduct('');
+      setQuantity(1);
+    } catch (err: any) {
+      console.error('Erreur enregistr. vente:', err);
+      const message = err?.response?.data?.message || 'Erreur lors de la création de la vente';
+      toast.error(message);
+    }
   };
 
   const recentSales = [...sales]

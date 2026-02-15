@@ -159,18 +159,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const addSale = async (sale: Omit<Sale, 'id'>) => {
+
     try {
-      console.warn('API call stubbed: addSale');
-      // const newSale = await salesApi.create(sale);
-      // setSales((prev) => [...prev, newSale]);
+      const newSale = await api.post('/sales', sale);
+
 
       // Update product stock locally
-      const product = products.find((p) => p.id === sale.productId);
+      const product = products.find((p) => p.id === sale.product_id);
       if (product) {
         setProducts((prev) =>
           prev.map((p) =>
-            p.id === sale.productId
-              ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites - sale.quantiteVendue) }
+            p.id === sale.product_id
+              ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites - sale.quantite_vendue) }
               : p
           )
         );
