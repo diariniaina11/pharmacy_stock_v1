@@ -161,16 +161,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addSale = async (sale: Omit<Sale, 'id'>) => {
 
     try {
-      const newSale = await api.post('/sales', sale);
+      const response = await api.post('/sales', sale);
 
+      const created = response.data;
+
+      const mappedSale: Sale = {
+        id: String(created.id),
+        productId: String(created.product_id),
+        productNom: created.product?.nom || 'Produit inconnu',
+        quantiteVendue: created.quantite_vendue,
+        date: created.date_vente,
+        userId: String(created.user_id),
+        userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
+      };
+
+      // Prepend the new sale so it's visible immediately
+      setSales((prev) => [mappedSale, ...prev]);
 
       // Update product stock locally
-      const product = products.find((p) => p.id === sale.product_id);
+      const product = products.find((p) => p.id === String(created.product_id));
       if (product) {
         setProducts((prev) =>
           prev.map((p) =>
-            p.id === sale.product_id
-              ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites - sale.quantite_vendue) }
+            p.id === String(created.product_id)
+              ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites - created.quantite_vendue) }
               : p
           )
         );

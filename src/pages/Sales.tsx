@@ -69,6 +69,12 @@ const Sales: React.FC = () => {
       return;
     }
 
+    const numericUserId = Number(user.id);
+    if (isNaN(numericUserId) || numericUserId <= 0) {
+      toast.error('ID utilisateur invalide');
+      return;
+    }
+
     /*
     forme de l'objet a envoyer   
     export interface Sale {
@@ -88,7 +94,7 @@ const Sales: React.FC = () => {
         product_nom: selectedProductData.nom,
         quantite_vendue: quantity,
         date_vente: new Date().toISOString().split('T')[0],
-        user_id: user.id,
+        user_id: numericUserId,
         user: user,
         product: response.data,
       };
