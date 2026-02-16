@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,11 @@ const Expirations: React.FC = () => {
 
     return { expired, soonToExpire, safe };
   }, [products]);
+
+  // exclude expired products with zero stock from display
+  const expiredVisible = useMemo(() => expired.filter((p) => p.quantiteBoites > 0), [expired]);
+
+  const [selectedCategory, setSelectedCategory] = useState<'expired' | 'warning' | 'safe'>('expired');
 
   const getDaysUntilExpiration = (dateStr: string) => {
     const expDate = new Date(dateStr);
@@ -117,7 +122,8 @@ const Expirations: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="border-destructive/50 bg-destructive/5">
+        <div role="button" tabIndex={0} onClick={() => setSelectedCategory('expired')} className={`rounded-lg focus:outline-none ${selectedCategory === 'expired' ? 'ring-2 ring-destructive/50' : ''}`}>
+          <Card className="border-destructive/50 bg-destructive/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <XCircle className="w-4 h-4 text-destructive" />
@@ -125,10 +131,13 @@ const Expirations: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-destructive">{expired.length}</p>
+            <p className="text-3xl font-bold text-destructive">{expiredVisible.length}</p>
+            <p className="text-sm text-muted-foreground">périmé(s)</p>
           </CardContent>
-        </Card>
-        <Card className="border-warning/50 bg-warning/5">
+          </Card>
+        </div>
+        <div role="button" tabIndex={0} onClick={() => setSelectedCategory('warning')} className={`rounded-lg focus:outline-none ${selectedCategory === 'warning' ? 'ring-2 ring-warning/50' : ''}`}>
+          <Card className="border-warning/50 bg-warning/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-warning" />
@@ -139,8 +148,10 @@ const Expirations: React.FC = () => {
             <p className="text-3xl font-bold text-warning">{soonToExpire.length}</p>
             <p className="text-sm text-muted-foreground">Dans les 30 prochains jours</p>
           </CardContent>
-        </Card>
-        <Card className="border-success/50 bg-success/5">
+          </Card>
+        </div>
+        <div role="button" tabIndex={0} onClick={() => setSelectedCategory('safe')} className={`rounded-lg focus:outline-none ${selectedCategory === 'safe' ? 'ring-2 ring-success/50' : ''}`}>
+          <Card className="border-success/50 bg-success/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Clock className="w-4 h-4 text-success" />
@@ -149,50 +160,58 @@ const Expirations: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-success">{safe.length}</p>
+            <p className="text-sm text-muted-foreground">Valide(s)</p>
+
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
+      {/* Category display - only show selected */}
+      <div className="mt-6">
+        {selectedCategory === 'expired' && (
+          <Card className="mb-6 border-destructive/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <XCircle className="w-5 h-5" />
+                Produits périmés
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProductTable items={expiredVisible} variant="expired" />
 
-      {/* Expired Products */}
-      {expired.length > 0 && (
-        <Card className="mb-6 border-destructive/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <XCircle className="w-5 h-5" />
-              Produits périmés
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProductTable items={expired} variant="expired" />
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Soon to Expire */}
-      <Card className="mb-6 border-warning/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-warning">
-            <AlertTriangle className="w-5 h-5" />
-            Péremption proche (30 jours)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductTable items={soonToExpire} variant="warning" />
-        </CardContent>
-      </Card>
+        {selectedCategory === 'warning' && (
+          <Card className="mb-6 border-warning/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-warning">
+                <AlertTriangle className="w-5 h-5" />
+                Péremption proche (30 jours)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProductTable items={soonToExpire} variant="warning" />
+              
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Safe Products */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-success">
-            <Clock className="w-5 h-5" />
-            Produits valides
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductTable items={safe} variant="safe" />
-        </CardContent>
-      </Card>
+        {selectedCategory === 'safe' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-success">
+                <Clock className="w-5 h-5" />
+                Produits valides
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProductTable items={safe} variant="safe" />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
