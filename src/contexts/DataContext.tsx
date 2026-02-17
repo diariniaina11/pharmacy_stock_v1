@@ -20,7 +20,9 @@ interface DataContextType {
   addRequest: (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => Promise<void>;
   updateRequestStatus: (id: string, status: 'VALIDE' | 'REFUSE') => Promise<void>;
   refreshData: () => Promise<void>;
+  history: any[];
 }
+
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
@@ -31,6 +33,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [fournisseurs, setFournisseurs] = useState<ApiFournisseur[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +97,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         productNom: s.product?.nom || 'Produit inconnu',
         quantiteVendue: s.quantite_vendue,
         date: s.date_vente,
+        createdAt: s.created_at,
         userId: String(s.user_id),
         userName: s.user ? `${s.user.prenom} ${s.user.nom}` : 'Utilisateur inconnu',
       }));
@@ -133,7 +137,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await api.post('/products', product);
 
       // After success, refresh data to get the new product with its generated ID and mapped fields
+      const created = response.data;
       await fetchData();
+
+      // add history entry
+      setHistory((prev) => [
+        {
+          id: `product-create-${created.id}`,
+          type: 'product',
+          action: 'create',
+          userId: product.user_id || null,
+          userName: product.userName || 'Utilisateur inconnu',
+          productId: String(created.id),
+          productNom: created.nom,
+          date: created.created_at || new Date().toISOString().split('T')[0],
+        },
+        ...prev,
+      ]);
     } catch (err) {
       console.error('Error adding product:', err);
       throw err;
@@ -144,6 +164,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await api.put(`/products/${id}`, updates);
       await fetchData();
+
+      setHistory((prev) => [
+        {
+          id: `product-update-${id}`,
+          type: 'product',
+          action: 'update',
+          userId: updates.user_id || null,
+          userName: updates.userName || 'Utilisateur inconnu',
+          productId: id,
+          productNom: updates.nom || null,
+          date: new Date().toISOString().split('T')[0],
+        },
+        ...prev,
+      ]);
     } catch (err) {
       console.error('Error updating product:', err);
       throw err;
@@ -154,6 +188,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      setHistory((prev) => [
+        {
+          id: `product-delete-${id}`,
+          type: 'product',
+          action: 'delete',
+          userId: null,
+          userName: 'Utilisateur inconnu',
+          productId: id,
+          productNom: null,
+          date: new Date().toISOString().split('T')[0],
+        },
+        ...prev,
+      ]);
     } catch (err) {
       console.error('Error deleting product:', err);
       throw err;
@@ -182,12 +229,29 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         productNom: created.product?.nom || 'Produit inconnu',
         quantiteVendue: created.quantite_vendue,
         date: created.date_vente,
+        createdAt: created.created_at,
         userId: String(created.user_id),
         userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
       };
 
       // Prepend the new sale so it's visible immediately
       setSales((prev) => [mappedSale, ...prev]);
+
+      // add history entry
+      setHistory((prev) => [
+        {
+          id: `sale-create-${created.id}`,
+          type: 'sale',
+          action: 'create',
+          userId: String(created.user_id),
+          userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
+          productId: String(created.product_id),
+          productNom: created.product?.nom || 'Produit inconnu',
+          quantity: created.quantite_vendue,
+          date: created.date_vente,
+        },
+        ...prev,
+      ]);
 
       // Update product stock locally
       const product = products.find((p) => p.id === String(created.product_id));
@@ -225,6 +289,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               : p
           )
         );
+
+        // add history entry for deletion
+        setHistory((prev) => [
+          {
+            id: `sale-delete-${id}`,
+            type: 'sale',
+            action: 'delete',
+            userId: existingSale.userId,
+            userName: existingSale.userName,
+            productId: existingSale.productId,
+            productNom: existingSale.productNom,
+            quantity: existingSale.quantiteVendue,
+            date: new Date().toISOString().split('T')[0],
+          },
+          ...prev,
+        ]);
       }
 
       // refresh from server to ensure consistency
@@ -263,12 +343,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         productNom: updated.product?.nom || 'Produit inconnu',
         quantiteVendue: updated.quantite_vendue,
         date: updated.date_vente,
+        createdAt: updated.created_at,
         userId: String(updated.user_id),
         userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
       };
 
       // update sales list locally
       setSales((prevList) => prevList.map((s) => (s.id === id ? mappedSale : s)));
+
+      // add history entry for update
+      setHistory((prev) => [
+        {
+          id: `sale-update-${id}`,
+          type: 'sale',
+          action: 'update',
+          userId: mappedSale.userId,
+          userName: mappedSale.userName,
+          productId: mappedSale.productId,
+          productNom: mappedSale.productNom,
+          previousQuantity: prev.find((h) => h.type === 'sale' && h.action === 'create' && h.productId === mappedSale.productId)?.quantity ?? null,
+          newQuantity: mappedSale.quantiteVendue,
+          date: mappedSale.date,
+        },
+        ...prev,
+      ]);
 
       // adjust product stock locally based on difference between previous and updated quantities
       const productId = String(updated.product_id);
@@ -318,6 +416,39 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             );
           }
         }
+        // add history entry for validation
+        const req = requests.find((r) => r.id === id);
+        setHistory((prev) => [
+          {
+            id: `request-validate-${id}`,
+            type: 'request',
+            action: 'validate',
+            userId: req?.userId || null,
+            userName: req?.userName || 'Utilisateur inconnu',
+            productId: req?.productId || null,
+            productNom: req?.productNom || null,
+            quantity: req?.quantiteDemandee || null,
+            date: new Date().toISOString().split('T')[0],
+          },
+          ...prev,
+        ]);
+      }
+      if (status === 'REFUSE') {
+        const req = requests.find((r) => r.id === id);
+        setHistory((prev) => [
+          {
+            id: `request-refuse-${id}`,
+            type: 'request',
+            action: 'invalidate',
+            userId: req?.userId || null,
+            userName: req?.userName || 'Utilisateur inconnu',
+            productId: req?.productId || null,
+            productNom: req?.productNom || null,
+            quantity: req?.quantiteDemandee || null,
+            date: new Date().toISOString().split('T')[0],
+          },
+          ...prev,
+        ]);
       }
     } catch (err) {
       console.error('Error updating request status:', err);
@@ -345,6 +476,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addRequest,
         updateRequestStatus,
         refreshData: fetchData,
+        history,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, MouseEventHandler } from 'react';
 import { useData } from '@/contexts/DataContext';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
@@ -11,30 +11,45 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { History as HistoryIcon, ShoppingCart } from 'lucide-react';
+import { History as HistoryIcon, ShoppingCart, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 const History: React.FC = () => {
-  const { sales } = useData();
+  const { sales, history } = useData();
   const isAdmin = true;
   const user = { id: 'admin' };
 
+  const ButtonTab: React.FC<{ active?: boolean; onClick?: MouseEventHandler; children: React.ReactNode }> = ({ active, onClick, children }) => (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-md text-sm font-medium ${active ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-transparent hover:bg-muted/50'}`}
+    >
+      {children}
+    </button>
+  );
+
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<'all' | 'sale' | 'product' | 'request'>('all');
 
-  const filteredSales = useMemo(() => {
-    let filtered = isAdmin ? sales : sales.filter((s) => s.userId === user?.id);
-
-    if (search) {
-      filtered = filtered.filter(
-        (sale) =>
-          sale.productNom.toLowerCase().includes(search.toLowerCase()) ||
-          sale.userName.toLowerCase().includes(search.toLowerCase())
-      );
+  const filteredHistory = useMemo(() => {
+    let items = history;
+    if (!isAdmin) {
+      items = items.filter((h: any) => h.userId === user?.id);
     }
-
-    return filtered.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [sales, isAdmin, user, search]);
+    if (selectedType !== 'all') {
+      items = items.filter((h: any) => h.type === selectedType);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      items = items.filter((h: any) => {
+        return (
+          (h.productNom && h.productNom.toLowerCase().includes(q)) ||
+          (h.userName && h.userName.toLowerCase().includes(q)) ||
+          (h.action && h.action.toLowerCase().includes(q))
+        );
+      });
+    }
+    return items.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [history, isAdmin, user, selectedType, search]);
 
   return (
     <div>
@@ -56,30 +71,17 @@ const History: React.FC = () => {
         />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total des ventes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{filteredSales.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Produits vendus
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
-              {filteredSales.reduce((acc, s) => acc + s.quantiteVendue, 0)}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Filters */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex gap-2">
+          <ButtonTab active={selectedType === 'all'} onClick={() => setSelectedType('all')}>Tous</ButtonTab>
+          <ButtonTab active={selectedType === 'sale'} onClick={() => setSelectedType('sale')}>Ventes</ButtonTab>
+          <ButtonTab active={selectedType === 'product'} onClick={() => setSelectedType('product')}>Produits</ButtonTab>
+          <ButtonTab active={selectedType === 'request'} onClick={() => setSelectedType('request')}>Demandes</ButtonTab>
+        </div>
+        <div className="ml-auto max-w-md">
+          <SearchInput value={search} onChange={setSearch} placeholder="Rechercher..." />
+        </div>
       </div>
 
       {/* History Table */}
@@ -87,7 +89,7 @@ const History: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <HistoryIcon className="w-5 h-5 text-primary" />
-            Historique des ventes
+            Journal d'activité
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -95,42 +97,59 @@ const History: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Produit</TableHead>
-                <TableHead>Quantité</TableHead>
-                <TableHead>Vendeur</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Détails</TableHead>
+                <TableHead>Utilisateur</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSales.length === 0 ? (
+              {filteredHistory.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">Aucune vente enregistrée</p>
+                    <p className="text-muted-foreground">Aucun historique</p>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredSales.map((sale) => (
-                  <TableRow key={sale.id}>
+                filteredHistory.map((h: any) => (
+                  <TableRow key={h.id}>
                     <TableCell>
-                      {new Date(sale.date).toLocaleDateString('fr-FR', {
+                      {new Date(h.date).toLocaleDateString('fr-FR', {
                         weekday: 'short',
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })}
                     </TableCell>
-                    <TableCell className="font-medium">{sale.productNom}</TableCell>
                     <TableCell>
-                      <span className="badge-success">{sale.quantiteVendue} boîtes</span>
+                      <div className="flex items-center gap-2">
+                        {h.type === 'sale' && h.action === 'create' && <ShoppingCart className="w-4 h-4 text-primary" />}
+                        {h.type === 'sale' && h.action === 'update' && <Edit className="w-4 h-4 text-amber-500" />}
+                        {h.type === 'sale' && h.action === 'delete' && <Trash2 className="w-4 h-4 text-destructive" />}
+                        {h.type === 'request' && h.action === 'validate' && <CheckCircle className="w-4 h-4 text-success" />}
+                        {h.type === 'request' && h.action === 'invalidate' && <XCircle className="w-4 h-4 text-warning" />}
+                        {h.type === 'product' && h.action === 'create' && <ShoppingCart className="w-4 h-4" />}
+                        <span className="font-medium">{h.type.toUpperCase()} — {h.action}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {h.productNom && <div className="font-medium">{h.productNom}</div>}
+                      {h.quantity !== undefined && <div>{h.quantity} boîtes</div>}
+                      {h.previousQuantity !== undefined && (
+                        <div className="text-sm text-muted-foreground">Avant: {h.previousQuantity}</div>
+                      )}
+                      {h.newQuantity !== undefined && (
+                        <div className="text-sm text-muted-foreground">Après: {h.newQuantity}</div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-xs font-medium text-primary">
-                            {sale.userName.split(' ').map((n) => n[0]).join('')}
+                            {h.userName ? h.userName.split(' ').map((n:any) => n[0]).join('') : '??'}
                           </span>
                         </div>
-                        {sale.userName}
+                        {h.userName}
                       </div>
                     </TableCell>
                   </TableRow>

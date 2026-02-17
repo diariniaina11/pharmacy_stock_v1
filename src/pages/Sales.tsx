@@ -28,13 +28,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ShoppingCart, Package, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { Plus, ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { User, Sale } from '@/types';
+import { User } from '@/types';
 import axios from '@/api/axios';
 
 const Sales: React.FC = () => {
-  const { products, sales, addSale, updateSale, deleteSale } = useData();
+  const { products, sales, addSale, deleteSale } = useData();
   
   const user:User = JSON.parse(localStorage.getItem('user') || '{}');
   
@@ -42,10 +42,7 @@ const Sales: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [editQuantity, setEditQuantity] = useState(1);
-  const [editDate, setEditDate] = useState('');
+  
 
   const availableProducts = products.filter((p) => p.quantiteBoites > 0);
   const selectedProductData = products.find((p) => p.id === selectedProduct);
@@ -117,46 +114,10 @@ const Sales: React.FC = () => {
   };
 
   const recentSales = [...sales]
-    .sort((a, b) => new Date(b.date_vente).getTime() - new Date(a.date_vente).getTime())
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
 
-  const openEdit = (sale: Sale) => {
-    setEditingSale(sale);
-    setEditQuantity(sale.quantite_vendue);
-    setEditDate(sale.date_vente);
-    setEditDialogOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Confirmer la suppression de cette vente ?')) return;
-    try {
-      await deleteSale(id);
-      toast.success('Vente supprimée');
-    } catch (err: any) {
-      console.error('Erreur suppression vente:', err);
-        const message = err?.response?.data?.message || err?.message || 'Erreur lors de la suppression';
-      toast.error(message);
-    }
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingSale) return;
-    if (editQuantity <= 0) {
-      toast.error('Quantité invalide');
-      return;
-    }
-    try {
-      await updateSale(editingSale.id, { quantite_vendue: editQuantity, date_vente: editDate });
-      toast.success('Vente mise à jour');
-      setEditDialogOpen(false);
-      setEditingSale(null);
-    } catch (err: any) {
-      console.error('Erreur mise à jour vente:', err);
-        const message = err?.response?.data?.message || err?.message || 'Erreur lors de la mise à jour';
-      toast.error(message);
-    }
-  };
+  
 
   return (
     <div>
@@ -249,42 +210,7 @@ const Sales: React.FC = () => {
         }
       />
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier la vente</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="editQuantity">Quantité</Label>
-              <Input
-                id="editQuantity"
-                type="number"
-                min={1}
-                value={editQuantity}
-                onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="editDate">Date</Label>
-              <Input
-                id="editDate"
-                type="date"
-                value={editDate?.split('T')[0] || editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit">Enregistrer</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -296,7 +222,7 @@ const Sales: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {sales.filter((s) => s.date_vente === new Date().toISOString().split('T')[0]).length}
+              {sales.filter((s) => s.date === new Date().toISOString().split('T')[0]).length}
             </p>
           </CardContent>
         </Card>
@@ -334,19 +260,18 @@ const Sales: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Table>
-                <TableHeader>
+            <TableHeader>
               <TableRow>
                 <TableHead>Produit</TableHead>
                 <TableHead>Quantité</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Vendeur</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recentSales.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={4} className="text-center py-8">
                     <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
                     <p className="text-muted-foreground">Aucune vente enregistrée</p>
                   </TableCell>
@@ -357,15 +282,22 @@ const Sales: React.FC = () => {
                     <TableCell className="font-medium">{sale.productNom}</TableCell>
                     <TableCell>{sale.quantiteVendue} boîtes</TableCell>
                     <TableCell>{new Date(sale.date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>{sale.userName}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(sale)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(sale.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                      <div className="flex items-center gap-3">
+                        <div>{sale.userName}</div>
+                        {sale.createdAt && (Date.now() - new Date(sale.createdAt).getTime()) <= 10 * 60 * 1000 && (
+                          <Button size="sm" variant="ghost" onClick={async () => {
+                            try {
+                              await deleteSale(sale.id);
+                              toast.success('Vente annulée');
+                            } catch (err: any) {
+                              console.error(err);
+                              toast.error(err?.message || 'Erreur lors de l\'annulation');
+                            }
+                          }}>
+                            Annuler
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

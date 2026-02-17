@@ -35,6 +35,7 @@ export interface Sale {
   date_vente: string;
   product: Product;
   user: User;
+  createdAt?: string;
 }
 
 export interface ProductRequest {
