@@ -387,9 +387,38 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addRequest = async (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => {
     try {
-      console.warn('API call stubbed: addRequest');
-      // const newRequest = await requestsApi.create(request);
-      // setRequests((prev) => [...prev, newRequest]);
+      // Frontend-local creation of a request when backend API is not yet implemented.
+      const id = `req-${Date.now()}`;
+      const dateCreation = new Date().toISOString();
+      const newReq: ProductRequest = {
+        id: id,
+        productId: request.productId ? String(request.productId) : undefined,
+        productNom: request.productNom || 'Produit inconnu',
+        quantiteDemandee: request.quantiteDemandee || 1,
+        commentaire: request.commentaire || '',
+        status: 'EN_ATTENTE',
+        dateCreation: dateCreation,
+        userId: request.userId ? String(request.userId) : null,
+        userName: request.userName || 'Utilisateur inconnu',
+      } as any;
+
+      setRequests((prev) => [newReq, ...prev]);
+
+      // add history entry
+      setHistory((prev) => [
+        {
+          id: `request-create-${id}`,
+          type: 'request',
+          action: 'create',
+          userId: newReq.userId || null,
+          userName: newReq.userName || 'Utilisateur inconnu',
+          productId: newReq.productId || null,
+          productNom: newReq.productNom || null,
+          quantity: newReq.quantiteDemandee,
+          date: dateCreation.split('T')[0],
+        },
+        ...prev,
+      ]);
     } catch (err) {
       console.error('Error adding request:', err);
       throw err;

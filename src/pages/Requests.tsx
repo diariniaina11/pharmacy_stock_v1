@@ -28,11 +28,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, FileText, Clock, CheckCircle, XCircle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Requests: React.FC = () => {
-  const { products, requests, addRequest } = useData();
+  const { products, requests, addRequest, updateRequestStatus } = useData();
   const isAdmin = true;
   const user = { id: 'admin', prenom: 'Admin', nom: 'System' };
 
@@ -259,19 +259,20 @@ const Requests: React.FC = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
+                <TableRow>
                 <TableHead>Produit</TableHead>
                 <TableHead>Quantité</TableHead>
                 <TableHead>Commentaire</TableHead>
                 <TableHead>Date</TableHead>
                 {isAdmin && <TableHead>Demandeur</TableHead>}
                 <TableHead>Statut</TableHead>
+                {isAdmin && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRequests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8">
+                  <TableCell colSpan={isAdmin ? 7 : 5} className="text-center py-8">
                     <FileText className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
                     <p className="text-muted-foreground">Aucune demande</p>
                   </TableCell>
@@ -279,15 +280,60 @@ const Requests: React.FC = () => {
               ) : (
                 filteredRequests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.productNom}</TableCell>
-                    <TableCell>{request.quantiteDemandee} boîtes</TableCell>
-                    <TableCell className="max-w-xs truncate">{request.commentaire}</TableCell>
-                    <TableCell>
-                      {new Date(request.dateCreation).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                    {isAdmin && <TableCell>{request.userName}</TableCell>}
-                    <TableCell>{getStatusBadge(request.status)}</TableCell>
-                  </TableRow>
+                      <TableCell className="font-medium">{request.productNom}</TableCell>
+                      <TableCell>{request.quantiteDemandee} boîtes</TableCell>
+                      <TableCell className="max-w-xs truncate">{request.commentaire}</TableCell>
+                      <TableCell>
+                        {new Date(request.dateCreation).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                      {isAdmin && <TableCell>{request.userName}</TableCell>}
+                      <TableCell>{getStatusBadge(request.status)}</TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={request.status !== 'EN_ATTENTE'}
+                              aria-label="Accepter"
+                              title="Accepter"
+                              onClick={async () => {
+                                if (request.status !== 'EN_ATTENTE') return;
+                                try {
+                                  await updateRequestStatus(request.id, 'VALIDE');
+                                  toast.success('Demande validée');
+                                } catch (err: any) {
+                                  console.error(err);
+                                  toast.error(err?.message || 'Erreur lors de la validation');
+                                }
+                              }}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={request.status !== 'EN_ATTENTE'}
+                              aria-label="Refuser"
+                              title="Refuser"
+                              onClick={async () => {
+                                if (request.status !== 'EN_ATTENTE') return;
+                                if (!confirm('Confirmer le refus de cette demande ?')) return;
+                                try {
+                                  await updateRequestStatus(request.id, 'REFUSE');
+                                  toast.success('Demande refusée');
+                                } catch (err: any) {
+                                  console.error(err);
+                                  toast.error(err?.message || 'Erreur lors du refus');
+                                }
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
                 ))
               )}
             </TableBody>

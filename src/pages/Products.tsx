@@ -30,6 +30,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product } from '@/types';
 
@@ -51,7 +52,10 @@ const Products: React.FC = () => {
     updateRequestStatus,
     refreshData: fetchData,
   } = useData();
-  const isAdmin = true;
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+  const role = currentUser?.role;
+  const isAdmin = role === 'ADMIN';
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -71,6 +75,40 @@ const Products: React.FC = () => {
     created_at: '',
     updated_at: ''
   });
+
+  // Request dialog state
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [requestProduct, setRequestProduct] = useState<Product | null>(null);
+  const [requestForm, setRequestForm] = useState({ quantiteDemandee: 1, commentaire: '' });
+
+  const openRequestDialog = (product: Product) => {
+    setRequestProduct(product);
+    setRequestForm({ quantiteDemandee: 1, commentaire: '' });
+    setIsRequestOpen(true);
+  };
+
+  const handleRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!requestProduct) return;
+
+      try {
+      // Use logged-in user from localStorage, fallback to first user
+      const requester = currentUser || (users && users.length > 0 ? users[0] : { id: 'unknown', prenom: 'Utilisateur', nom: '' } as any);
+      await addRequest({
+        productId: requestProduct.id,
+        productNom: requestProduct.nom,
+        quantiteDemandee: requestForm.quantiteDemandee,
+        commentaire: requestForm.commentaire,
+        userId: requester.id,
+        userName: `${requester.prenom} ${requester.nom}`,
+      });
+      toast.success('Demande créée');
+      setIsRequestOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erreur lors de la création de la demande');
+    }
+  };
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -180,7 +218,8 @@ const Products: React.FC = () => {
   };
 
   return (
-    <div>
+    <>
+      <div>
       <PageHeader
         title="Gestion des Produits"
         description="Gérez votre catalogue de produits pharmaceutiques"
@@ -395,6 +434,15 @@ const Products: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Demander quantité pour ${product.nom}`}
+                          title="Demander"
+                          onClick={() => openRequestDialog(product)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(product.id)}
                           className="text-destructive hover:text-destructive"
                         >
@@ -410,6 +458,45 @@ const Products: React.FC = () => {
         </Table>
       </div>
     </div>
+    {/* Request Dialog */}
+    <Dialog open={isRequestOpen} onOpenChange={(open) => setIsRequestOpen(open)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Demander une quantité</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleRequestSubmit} className="space-y-4">
+          <div>
+            <Label>Produit</Label>
+            <div className="font-medium">{requestProduct?.nom}</div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Quantité demandée</Label>
+            <Input
+              type="number"
+              min={1}
+              value={requestForm.quantiteDemandee}
+              onChange={(e) => setRequestForm({ ...requestForm, quantiteDemandee: parseInt(e.target.value) || 1 })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Commentaire</Label>
+            <Textarea
+              value={requestForm.commentaire}
+              onChange={(e) => setRequestForm({ ...requestForm, commentaire: e.target.value })}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => setIsRequestOpen(false)}>Annuler</Button>
+            <Button type="submit">Envoyer la demande</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
