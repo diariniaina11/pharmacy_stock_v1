@@ -385,20 +385,20 @@ const Products: React.FC = () => {
       <div className="table-container">
         <Table>
           <TableHeader>
-            <TableRow>
+              <TableRow>
               <TableHead>Produit</TableHead>
               <TableHead>Catégorie</TableHead>
               <TableHead>N° Lot</TableHead>
               <TableHead>Péremption</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Prix</TableHead>
-              {isAdmin && <TableHead className="w-[100px]">Actions</TableHead>}
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
                   <p className="text-muted-foreground">Aucun produit trouvé</p>
                 </TableCell>
@@ -421,16 +421,27 @@ const Products: React.FC = () => {
                     </span>
                   </TableCell>
                   <TableCell>{product.prix.toFixed(2)} €</TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {isAdmin ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(product)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(product.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -440,17 +451,9 @@ const Products: React.FC = () => {
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(product.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
