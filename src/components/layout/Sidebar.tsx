@@ -14,14 +14,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { auth, logout } = useAuth();
 
-  const stored = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-  const parsedUser = stored ? JSON.parse(stored) : null;
-  const isAdmin = parsedUser?.role === 'ADMIN';
-  const user = parsedUser || { prenom: 'Invité', nom: '' };
+  const isAdmin = auth?.role === 'ADMIN';
+  const user = auth || { prenom: 'Invité', nom: '' };
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -32,6 +32,11 @@ const Sidebar: React.FC = () => {
     { to: '/validation', icon: CheckSquare, label: 'Validation' },
     { to: '/historique', icon: History, label: 'Historique' },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50">
@@ -85,14 +90,7 @@ const Sidebar: React.FC = () => {
               size="icon"
               aria-label="Déconnexion"
               title="Déconnexion"
-              onClick={() => {
-                // Nettoyer complètement le localStorage
-                localStorage.removeItem('user');
-                localStorage.removeItem('pharmacy_products');
-                localStorage.removeItem('pharmacy_sales');
-                localStorage.removeItem('pharmacy_requests');
-                navigate('/login');
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="w-4 h-4" />
             </Button>

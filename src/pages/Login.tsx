@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Pill, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import AuthContext from '@/context/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import axios from '@/api/axios';
 import md5 from 'md5';
 
@@ -15,7 +15,8 @@ const LOGIN_URL = '/users';
 
 
 const Login: React.FC = () => {
-  const { setAuth } = useContext(AuthContext);
+  const { setAuth } = useAuth();
+  
   // ✅ CORRECTION 1: Typage correct des refs
   const userRef = useRef<HTMLInputElement>(null);
   const errRef = useRef<HTMLParagraphElement>(null);
@@ -55,10 +56,10 @@ const Login: React.FC = () => {
       if (response.data.password === hashedPwd) {
         toast.success('Connexion réussie');
 
-        setAuth({ user, hashedPwd });
+        // Utiliser setAuth qui gère le localStorage automatiquement
+        setAuth(response.data);
         console.log(response.data);
         
-        localStorage.setItem('user', JSON.stringify(response.data));
         navigate('/dashboard');
       } else {
         setErrMsg("Mot de passe incorrect");

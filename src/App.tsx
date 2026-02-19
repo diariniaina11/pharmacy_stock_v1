@@ -16,6 +16,7 @@ import Validation from "@/pages/Validation";
 import History from "@/pages/History";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthProvider";
+import ProtectedRoute from "@/authguard/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -28,9 +29,18 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Routes publiques */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route element={<MainLayout />}>
+
+              {/* Routes protégées */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/produits" element={<Products />} />
@@ -40,6 +50,8 @@ const App = () => (
                 <Route path="/validation" element={<Validation />} />
                 <Route path="/historique" element={<History />} />
               </Route>
+
+              {/* Redirection par défaut */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
