@@ -86,7 +86,11 @@ const Sidebar: React.FC = () => {
               aria-label="Déconnexion"
               title="Déconnexion"
               onClick={() => {
+                // Nettoyer complètement le localStorage
                 localStorage.removeItem('user');
+                localStorage.removeItem('pharmacy_products');
+                localStorage.removeItem('pharmacy_sales');
+                localStorage.removeItem('pharmacy_requests');
                 navigate('/login');
               }}
             >
