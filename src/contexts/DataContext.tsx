@@ -387,35 +387,44 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addRequest = async (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => {
     try {
-      // Frontend-local creation of a request when backend API is not yet implemented.
-      const id = `req-${Date.now()}`;
-      const dateCreation = new Date().toISOString();
-      const newReq: ProductRequest = {
-        id: id,
-        productId: request.productId ? String(request.productId) : undefined,
-        productNom: request.productNom || 'Produit inconnu',
-        quantiteDemandee: request.quantiteDemandee || 1,
+      // Send to backend API
+      const payload: any = {
+        product_id: request.productId || null,
+        quantite_demandee: request.quantiteDemandee,
         commentaire: request.commentaire || '',
-        status: 'EN_ATTENTE',
-        dateCreation: dateCreation,
-        userId: request.userId ? String(request.userId) : null,
-        userName: request.userName || 'Utilisateur inconnu',
-      } as any;
+        user_id: request.userId || null,
+      };
 
-      setRequests((prev) => [newReq, ...prev]);
+      const response = await api.post('/product-requests', payload);
+      const created = response.data;
+
+      const mapped: ProductRequest = {
+        id: String(created.id),
+        productId: created.product_id ? String(created.product_id) : undefined,
+        productNom: created.product?.nom || request.productNom || 'Produit inconnu',
+        quantiteDemandee: created.quantite_demandee,
+        commentaire: created.commentaire || '',
+        status: created.status,
+        dateCreation: created.date_creation,
+        userId: created.user_id ? String(created.user_id) : String(request.userId || ''),
+        userName: created.user ? `${created.user.prenom} ${created.user.nom}` : request.userName || 'Utilisateur inconnu',
+      };
+
+      // prepend to local state
+      setRequests((prev) => [mapped, ...prev]);
 
       // add history entry
       setHistory((prev) => [
         {
-          id: `request-create-${id}`,
+          id: `request-create-${created.id}`,
           type: 'request',
           action: 'create',
-          userId: newReq.userId || null,
-          userName: newReq.userName || 'Utilisateur inconnu',
-          productId: newReq.productId || null,
-          productNom: newReq.productNom || null,
-          quantity: newReq.quantiteDemandee,
-          date: dateCreation.split('T')[0],
+          userId: mapped.userId || null,
+          userName: mapped.userName || 'Utilisateur inconnu',
+          productId: mapped.productId || null,
+          productNom: mapped.productNom || null,
+          quantity: mapped.quantiteDemandee,
+          date: (mapped.dateCreation || new Date().toISOString()).split('T')[0],
         },
         ...prev,
       ]);
@@ -427,53 +436,58 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateRequestStatus = async (id: string, status: 'VALIDE' | 'REFUSE') => {
     try {
-      console.warn('API call stubbed: updateRequestStatus');
-      // const updatedRequest = await requestsApi.updateStatus(id, status);
-      // setRequests((prev) => prev.map((r) => (r.id === id ? updatedRequest : r)));
+      // Call backend to update status
+      const response = await api.put(`/product-requests/${id}`, { status });
+      const updated = response.data;
 
-      if (status === 'VALIDE') {
-        const request = requests.find((r) => r.id === id);
-        if (request && request.productId) {
-          const product = products.find((p) => p.id === request.productId);
-          if (product) {
-            setProducts((prev) =>
-              prev.map((p) =>
-                p.id === request.productId
-                  ? { ...p, quantiteBoites: p.quantiteBoites + request.quantiteDemandee }
-                  : p
-              )
-            );
-          }
-        }
-        // add history entry for validation
-        const req = requests.find((r) => r.id === id);
+      const mapped: ProductRequest = {
+        id: String(updated.id),
+        productId: updated.product_id ? String(updated.product_id) : undefined,
+        productNom: updated.product?.nom || 'Produit inconnu',
+        quantiteDemandee: updated.quantite_demandee,
+        commentaire: updated.commentaire || '',
+        status: updated.status,
+        dateCreation: updated.date_creation,
+        userId: updated.user_id ? String(updated.user_id) : '',
+        userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
+      };
+
+      // update local requests list
+      setRequests((prev) => prev.map((r) => (r.id === mapped.id ? mapped : r)));
+
+      if (mapped.status === 'VALIDE' && mapped.productId) {
+        // increase product stock
+        setProducts((prev) =>
+          prev.map((p) => (p.id === mapped.productId ? { ...p, quantiteBoites: p.quantiteBoites + mapped.quantiteDemandee } : p))
+        );
+
         setHistory((prev) => [
           {
-            id: `request-validate-${id}`,
+            id: `request-validate-${mapped.id}`,
             type: 'request',
             action: 'validate',
-            userId: req?.userId || null,
-            userName: req?.userName || 'Utilisateur inconnu',
-            productId: req?.productId || null,
-            productNom: req?.productNom || null,
-            quantity: req?.quantiteDemandee || null,
+            userId: mapped.userId || null,
+            userName: mapped.userName || 'Utilisateur inconnu',
+            productId: mapped.productId || null,
+            productNom: mapped.productNom || null,
+            quantity: mapped.quantiteDemandee || null,
             date: new Date().toISOString().split('T')[0],
           },
           ...prev,
         ]);
       }
-      if (status === 'REFUSE') {
-        const req = requests.find((r) => r.id === id);
+
+      if (mapped.status === 'REFUSE') {
         setHistory((prev) => [
           {
-            id: `request-refuse-${id}`,
+            id: `request-refuse-${mapped.id}`,
             type: 'request',
             action: 'invalidate',
-            userId: req?.userId || null,
-            userName: req?.userName || 'Utilisateur inconnu',
-            productId: req?.productId || null,
-            productNom: req?.productNom || null,
-            quantity: req?.quantiteDemandee || null,
+            userId: mapped.userId || null,
+            userName: mapped.userName || 'Utilisateur inconnu',
+            productId: mapped.productId || null,
+            productNom: mapped.productNom || null,
+            quantity: mapped.quantiteDemandee || null,
             date: new Date().toISOString().split('T')[0],
           },
           ...prev,

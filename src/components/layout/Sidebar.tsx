@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -10,12 +10,18 @@ import {
   History,
   Pill,
   User,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const Sidebar: React.FC = () => {
-  const isAdmin = true;
-  const user = { prenom: 'Admin', nom: 'System' };
+  const navigate = useNavigate();
+
+  const stored = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+  const parsedUser = stored ? JSON.parse(stored) : null;
+  const isAdmin = parsedUser?.role === 'ADMIN';
+  const user = parsedUser || { prenom: 'Invité', nom: '' };
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -70,12 +76,22 @@ const Sidebar: React.FC = () => {
             <User className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate">
-              {user.prenom} {user.nom}
-            </p>
-            <p className="text-xs text-sidebar-foreground/70">
-              Administrateur
-            </p>
+            <p className="font-medium text-sm truncate">{user.prenom} {user.nom}</p>
+            <p className="text-xs text-sidebar-foreground/70">{isAdmin ? 'Administrateur' : 'Vendeur'}</p>
+          </div>
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Déconnexion"
+              title="Déconnexion"
+              onClick={() => {
+                localStorage.removeItem('user');
+                navigate('/login');
+              }}
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </div>
