@@ -1,5 +1,5 @@
 import { useState, createContext, useEffect, ReactNode } from "react";
-import { verifyUserWithServer, isUserDataValid } from "@/api/authService";
+import { verifyUserWithServer, isUserDataValid, updateUserActivity } from "@/api/authService";
 
 interface User {
   id?: string;
@@ -75,6 +75,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     initializeAuth();
   }, []);
+
+  // Mettre à jour l'activité utilisateur toutes les minutes
+  useEffect(() => {
+    // Seulement si l'utilisateur est authentifié et a un ID
+    if (!isAuthenticated || !auth?.id) {
+      return;
+    }
+
+    // Mise à jour immédiate au chargement
+    updateUserActivity(auth.id);
+
+    // Puis toutes les minutes (60000 ms)
+    const activityInterval = setInterval(() => {
+      if (auth?.id) {
+        updateUserActivity(auth.id);
+      }
+    }, 60000); // 1 minute
+
+    // Cleanup: arrêter l'intervalle si le composant se démonte ou si l'utilisateur se déconnecte
+    return () => {
+      clearInterval(activityInterval);
+    };
+  }, [isAuthenticated, auth?.id]);
 
   const handleSetAuth = (user: User | null) => {
     if (user) {

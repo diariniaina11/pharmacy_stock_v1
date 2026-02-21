@@ -1,6 +1,38 @@
 import axios from './axios';
 
 /**
+ * Met à jour l'activité de l'utilisateur (updated_at)
+ * @param userId - L'ID de l'utilisateur
+ * @returns true si la mise à jour est réussie
+ */
+export const updateUserActivity = async (userId: string | number): Promise<boolean> => {
+  try {
+    if (!userId) {
+      console.warn('Pas d\'ID utilisateur pour mettre à jour l\'activité');
+      return false;
+    }
+
+    // Formater la date au format: "2026-02-18T13:43:08.000000Z"
+    const now = new Date();
+    const isoString = now.toISOString();
+    // Remplacer les millisecondes par les microsecondes (6 zéros)
+    const formatted = isoString.replace(/\.\d{3}Z$/, '.000000Z');
+    
+    const response = await axios.patch(`/users/${userId}`, {
+      updated_at: formatted,
+    });
+
+    if (response.status === 200 || response.status === 204) {
+      return true;
+    }
+    return false;
+  } catch (error: any) {
+    console.error('Erreur lors de la mise à jour de l\'activité utilisateur:', error);
+    return false;
+  }
+};
+
+/**
  * Vérifie l'authenticité d'un utilisateur auprès du serveur
  * @param user - Les données utilisateur du localStorage
  * @returns true si l'utilisateur est valide, false sinon
