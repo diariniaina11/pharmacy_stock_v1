@@ -17,11 +17,13 @@ import History from "@/pages/History";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthProvider";
 import ProtectedRoute from "@/authguard/ProtectedRoute";
+import ActivityTracker from "@/components/ActivityTracker";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <AuthProvider>
+    <ActivityTracker />
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DataProvider>

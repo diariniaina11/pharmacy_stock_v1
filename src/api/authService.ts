@@ -12,11 +12,16 @@ export const updateUserActivity = async (userId: string | number): Promise<boole
       return false;
     }
 
-    // Formater la date au format: "2026-02-18T13:43:08.000000Z"
+    // Formater la date au format MySQL: "2026-02-03 11:38:07"
     const now = new Date();
-    const isoString = now.toISOString();
-    // Remplacer les millisecondes par les microsecondes (6 zéros)
-    const formatted = isoString.replace(/\.\d{3}Z$/, '.000000Z');
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    const formatted = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     
     const response = await axios.patch(`/users/${userId}`, {
       updated_at: formatted,

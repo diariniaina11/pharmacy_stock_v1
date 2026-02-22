@@ -42,6 +42,17 @@ const Dashboard: React.FC = () => {
     (p) => p.quantiteBoites === 0
   );
 
+  // Utilisateurs actifs : updated_at dans la dernière minute
+  const activeUsers = users.filter((u: any) => {
+    const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
+    if (!updatedAt) return false;
+    // Tenter de parser 'YYYY-MM-DD HH:MM:SS' en remplaçant l'espace par 'T'
+    let ts = Date.parse(String(updatedAt).replace(' ', 'T'));
+    if (isNaN(ts)) ts = Date.parse(String(updatedAt));
+    if (isNaN(ts)) return false;
+    return (Date.now() - ts) <= 60000; // 1 minute
+  }).length;
+
   // Chart data
   const categoryData = products.reduce((acc, product) => {
     const existing = acc.find((item) => item.name === product.categorie);
@@ -98,10 +109,10 @@ const Dashboard: React.FC = () => {
         />
         <StatCard
           title="Utilisateurs"
-          value={users.length}
+          value={activeUsers}
           icon={Users}
           variant="success"
-          subtitle="Actifs"
+          subtitle="Actifs (1 min)"
         />
       </div>
 
