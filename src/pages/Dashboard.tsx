@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
 import { Package, AlertTriangle, XCircle, Users, TrendingUp, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import axios from '@/api/axios';
 
 const Dashboard: React.FC = () => {
   const {
@@ -38,20 +39,60 @@ const Dashboard: React.FC = () => {
     return diffDays >= 0 && diffDays <= 30;
   });
 
-  const outOfStock = products.filter(
-    (p) => p.quantiteBoites === 0
-  );
+  const outOfStock = products.filter((p) => p.quantiteBoites === 0);
 
-  // Utilisateurs actifs : updated_at dans la dernière minute
-  const activeUsers = users.filter((u: any) => {
-    const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
-    if (!updatedAt) return false;
-    // Tenter de parser 'YYYY-MM-DD HH:MM:SS' en remplaçant l'espace par 'T'
-    let ts = Date.parse(String(updatedAt).replace(' ', 'T'));
-    if (isNaN(ts)) ts = Date.parse(String(updatedAt));
-    if (isNaN(ts)) return false;
-    return (Date.now() - ts) <= 60000; // 1 minute
-  }).length;
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
+
+  const parseTimestampToMillis = (tsValue: any): number | null => {
+    if (!tsValue) return null;
+    const s = String(tsValue).trim();
+    // Try ISO-like: replace space with T and assume UTC
+    const isoAttempt = s.replace(' ', 'T') + 'Z';
+    let t = Date.parse(isoAttempt);
+    if (!isNaN(t)) return t;
+    // Try without Z (local)
+    t = Date.parse(s.replace(' ', 'T'));
+    if (!isNaN(t)) return t;
+    // Try direct parse
+    t = Date.parse(s);
+    if (!isNaN(t)) return t;
+    return null;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const computeActiveUsers = (allUsers: any[]) => {
+      const now = Date.now();
+      const active = allUsers.filter((u) => {
+        const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
+        const ms = parseTimestampToMillis(updatedAt);
+        if (!ms) return false;
+        return (now - ms) <= 60000;
+      }).length;
+      if (mounted) setActiveUsersCount(active);
+    };
+
+    const fetchAndCompute = async () => {
+      try {
+        const res = await axios.get('/users');
+        const allUsers = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        computeActiveUsers(allUsers as any[]);
+      } catch (err) {
+        console.error('Erreur récupération utilisateurs:', err);
+      }
+    };
+
+    // initial fetch
+    fetchAndCompute();
+    // refresh every minute
+    const id = setInterval(fetchAndCompute, 60000);
+
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
 
   // Chart data
   const categoryData = products.reduce((acc, product) => {
@@ -65,15 +106,17 @@ const Dashboard: React.FC = () => {
   }, [] as { name: string; value: number }[]);
 
   const salesByDay = sales.reduce((acc, sale) => {
-    const date = new Date(sale.date).toLocaleDateString('fr-FR', { weekday: 'short' });
-    const existing = acc.find((item) => item.name === date);
+    const saleDate = new Date(sale.date);
+    const name = saleDate.toLocaleDateString('fr-FR', { weekday: 'short' });
+    const fullDate = saleDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const existing = acc.find((item) => item.name === name);
     if (existing) {
       existing.ventes += sale.quantiteVendue;
     } else {
-      acc.push({ name: date, ventes: sale.quantiteVendue });
+      acc.push({ name, fullDate, ventes: sale.quantiteVendue });
     }
     return acc;
-  }, [] as { name: string; ventes: number }[]);
+  }, [] as { name: string; fullDate: string; ventes: number }[]);
 
   const COLORS = ['hsl(158, 64%, 40%)', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(200, 80%, 50%)', 'hsl(0, 84%, 60%)'];
 
@@ -109,7 +152,7 @@ const Dashboard: React.FC = () => {
         />
         <StatCard
           title="Utilisateurs"
-          value={activeUsers}
+          value={activeUsersCount}
           icon={Users}
           variant="success"
           subtitle="Actifs (1 min)"
@@ -136,6 +179,13 @@ const Dashboard: React.FC = () => {
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
+                  }}
+                  formatter={(value: any) => [`${value} ventes`]}
+                  labelFormatter={(_, payload) => {
+                    if (payload && payload.length > 0) {
+                      return payload[0].payload.fullDate;
+                    }
+                    return "";
                   }}
                 />
                 <Bar dataKey="ventes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
