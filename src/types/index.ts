@@ -33,8 +33,8 @@ export interface Sale {
   product_nom: string;
   quantite_vendue: number;
   date_vente: string;
-  product: Product;
-  user: User;
+  user_id: string;
+  userName: string;
   createdAt?: string;
 }
 

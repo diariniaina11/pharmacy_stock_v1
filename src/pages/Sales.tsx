@@ -32,17 +32,19 @@ import { Plus, ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { User } from '@/types';
 import axios from '@/api/axios';
+import { useAuth } from '@/hooks/useAuth';
 
 const Sales: React.FC = () => {
   const { products, sales, addSale, deleteSale } = useData();
-  
-  const user:User = JSON.parse(localStorage.getItem('user') || '{}');
-  
+
+  const { auth } = useAuth();
+  const user = auth;
+
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
-  
+
 
   const availableProducts = products.filter((p) => p.quantiteBoites > 0);
   const selectedProductData = products.find((p) => p.id === selectedProduct);
@@ -87,7 +89,7 @@ const Sales: React.FC = () => {
       userName: string;
     }
     */
-    
+
     try {
       const response = await axios.get(`/products/${selectedProduct}`);
       const sale = {
@@ -113,11 +115,15 @@ const Sales: React.FC = () => {
     }
   };
 
-  const recentSales = [...sales]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const filteredSalesData = user?.role === 'ADMIN'
+    ? sales
+    : sales.filter(s => String(s.user_id) === String(user?.id));
+
+  const recentSales = [...filteredSalesData]
+    .sort((a, b) => new Date(b.date_vente).getTime() - new Date(a.date_vente).getTime())
     .slice(0, 10);
 
-  
+
 
   return (
     <div>
@@ -210,7 +216,7 @@ const Sales: React.FC = () => {
         }
       />
 
-      
+
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -222,7 +228,7 @@ const Sales: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {sales.filter((s) => s.date === new Date().toISOString().split('T')[0]).length}
+              {filteredSalesData.filter((s) => s.date_vente === new Date().toISOString().split('T')[0]).length}
             </p>
           </CardContent>
         </Card>
@@ -233,7 +239,7 @@ const Sales: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{sales.length}</p>
+            <p className="text-2xl font-bold">{filteredSalesData.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -244,7 +250,7 @@ const Sales: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {sales.reduce((acc, s) => acc + s.quantiteVendue, 0)}
+              {filteredSalesData.reduce((acc, s) => acc + s.quantite_vendue, 0)}
             </p>
           </CardContent>
         </Card>
@@ -279,9 +285,9 @@ const Sales: React.FC = () => {
               ) : (
                 recentSales.map((sale) => (
                   <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.productNom}</TableCell>
-                    <TableCell>{sale.quantiteVendue} boîtes</TableCell>
-                    <TableCell>{new Date(sale.date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell className="font-medium">{sale.product_nom}</TableCell>
+                    <TableCell>{sale.quantite_vendue} boîtes</TableCell>
+                    <TableCell>{new Date(sale.date_vente).toLocaleDateString('fr-FR')}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div>{sale.userName}</div>

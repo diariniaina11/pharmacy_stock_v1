@@ -6,6 +6,7 @@ import { Package, AlertTriangle, XCircle, Users, TrendingUp, ShoppingCart } from
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import axios from '@/api/axios';
+import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard: React.FC = () => {
   const {
@@ -25,7 +26,7 @@ const Dashboard: React.FC = () => {
     updateRequestStatus,
     refreshData: fetchData,
   } = useData();
-  const user = { prenom: 'Admin' };
+  const { auth } = useAuth();
 
   const today = new Date();
 
@@ -105,15 +106,19 @@ const Dashboard: React.FC = () => {
     return acc;
   }, [] as { name: string; value: number }[]);
 
-  const salesByDay = sales.reduce((acc, sale) => {
-    const saleDate = new Date(sale.date);
+  const filteredSales = auth?.role === 'ADMIN'
+    ? sales
+    : sales.filter(s => String(s.user_id) === String(auth?.id));
+
+  const salesByDay = filteredSales.reduce((acc, sale) => {
+    const saleDate = new Date(sale.date_vente);
     const name = saleDate.toLocaleDateString('fr-FR', { weekday: 'short' });
     const fullDate = saleDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     const existing = acc.find((item) => item.name === name);
     if (existing) {
-      existing.ventes += sale.quantiteVendue;
+      existing.ventes += sale.quantite_vendue;
     } else {
-      acc.push({ name, fullDate, ventes: sale.quantiteVendue });
+      acc.push({ name, fullDate, ventes: sale.quantite_vendue });
     }
     return acc;
   }, [] as { name: string; fullDate: string; ventes: number }[]);
@@ -123,7 +128,7 @@ const Dashboard: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title={`Bonjour, ${user?.prenom} !`}
+        title={`Bonjour, ${auth?.prenom} !`}
         description="Voici un aperçu de votre pharmacie"
       />
 

@@ -93,12 +93,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const salesRes = await api.get('/sales');
       const mappedSales: Sale[] = salesRes.data.map((s: any) => ({
         id: String(s.id),
-        productId: String(s.product_id),
-        productNom: s.product?.nom || 'Produit inconnu',
-        quantiteVendue: s.quantite_vendue,
-        date: s.date_vente,
+        product_id: String(s.product_id),
+        product_nom: s.product?.nom || 'Produit inconnu',
+        quantite_vendue: s.quantite_vendue,
+        date_vente: s.date_vente,
         createdAt: s.created_at,
-        userId: String(s.user_id),
+        user_id: String(s.user_id),
         userName: s.user ? `${s.user.prenom} ${s.user.nom}` : 'Utilisateur inconnu',
       }));
       setSales(mappedSales);
@@ -225,12 +225,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const mappedSale: Sale = {
         id: String(created.id),
-        productId: String(created.product_id),
-        productNom: created.product?.nom || 'Produit inconnu',
-        quantiteVendue: created.quantite_vendue,
-        date: created.date_vente,
+        product_id: String(created.product_id),
+        product_nom: created.product?.nom || 'Produit inconnu',
+        quantite_vendue: created.quantite_vendue,
+        date_vente: created.date_vente,
         createdAt: created.created_at,
-        userId: String(created.user_id),
+        user_id: String(created.user_id),
         userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
       };
 
@@ -339,12 +339,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // map updated sale to frontend shape
       const mappedSale: Sale = {
         id: String(updated.id),
-        productId: String(updated.product_id),
-        productNom: updated.product?.nom || 'Produit inconnu',
-        quantiteVendue: updated.quantite_vendue,
-        date: updated.date_vente,
+        product_id: String(updated.product_id),
+        product_nom: updated.product?.nom || 'Produit inconnu',
+        quantite_vendue: updated.quantite_vendue,
+        date_vente: updated.date_vente,
         createdAt: updated.created_at,
-        userId: String(updated.user_id),
+        user_id: String(updated.user_id),
         userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
       };
 
