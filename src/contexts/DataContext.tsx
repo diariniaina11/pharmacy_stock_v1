@@ -19,6 +19,7 @@ interface DataContextType {
   deleteSale: (id: string) => Promise<void>;
   addRequest: (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => Promise<void>;
   updateRequestStatus: (id: string, status: 'VALIDE' | 'REFUSE') => Promise<void>;
+  addCategory: (nom: string) => Promise<ApiCategory>;
   refreshData: () => Promise<void>;
   history: any[];
 }
@@ -499,6 +500,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const addCategory = async (nom: string): Promise<ApiCategory> => {
+    try {
+      const response = await api.post('/categories', { nom });
+      const newCategory: ApiCategory = {
+        id: response.data.id,
+        nom: response.data.nom,
+      };
+      setCategories((prev) => [...prev, newCategory]);
+      return newCategory;
+    } catch (err) {
+      console.error('Error adding category:', err);
+      throw err;
+    }
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -518,6 +534,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteSale,
         addRequest,
         updateRequestStatus,
+        addCategory,
         refreshData: fetchData,
         history,
       }}
