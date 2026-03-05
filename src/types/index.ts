@@ -66,3 +66,28 @@ export interface ApiFournisseur {
   id: number;
   nom: string;
 }
+
+export interface SystemLog {
+  id: number;
+  date: string;
+  action: string;
+  info: string;
+  user: string | number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HistoryItem {
+  id: string;
+  type: 'sale' | 'product' | 'request' | 'category' | 'unknown';
+  action: string;
+  userId?: string;
+  userName?: string;
+  productId?: string;
+  productNom?: string;
+  quantity?: number;
+  previousQuantity?: number;
+  newQuantity?: number;
+  date: string;
+  info?: string;
+}

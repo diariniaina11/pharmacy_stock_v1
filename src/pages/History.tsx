@@ -1,5 +1,6 @@
 import React, { useMemo, useState, MouseEventHandler } from 'react';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/hooks/useAuth';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,12 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { History as HistoryIcon, ShoppingCart, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { History as HistoryIcon, ShoppingCart, Edit, Trash2, CheckCircle, XCircle, PlusCircle, MinusCircle, Package, Tag } from 'lucide-react';
+import { HistoryItem } from '@/types';
 
 const History: React.FC = () => {
-  const { sales, history } = useData();
-  const isAdmin = true;
-  const user = { id: 'admin' };
+  const { history } = useData();
+  const { auth } = useAuth();
+  const isAdmin = auth?.role === 'ADMIN';
+  const user = auth;
 
   const ButtonTab: React.FC<{ active?: boolean; onClick?: MouseEventHandler; children: React.ReactNode }> = ({ active, onClick, children }) => (
     <button
@@ -28,7 +31,7 @@ const History: React.FC = () => {
   );
 
   const [search, setSearch] = useState('');
-  const [selectedType, setSelectedType] = useState<'all' | 'sale' | 'product' | 'request'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'sale' | 'product' | 'request' | 'category'>('all');
 
   const filteredHistory = useMemo(() => {
     let items = history;
@@ -48,8 +51,39 @@ const History: React.FC = () => {
         );
       });
     }
-    return items.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [history, isAdmin, user, selectedType, search]);
+
+  const getLogLabel = (item: HistoryItem) => {
+    switch (item.action) {
+      case 'produitPlus': return 'Augmentation stock';
+      case 'produitMoins': return 'Diminution stock';
+      case 'produitSupp': return 'Suppression produit';
+      case 'produitNew': return 'Nouveau produit';
+      case 'venteMoins': return 'Augmentation vente';
+      case 'ventePlus': return 'Diminution vente';
+      case 'venteSupp': return 'Suppression vente';
+      case 'venteNew': return 'Nouvelle vente';
+      case 'categNew': return 'Nouvelle catégorie';
+      case 'categSupp': return 'Suppression catégorie';
+      case 'create': return 'Création';
+      case 'update': return 'Mise à jour';
+      case 'delete': return 'Suppression';
+      case 'validate': return 'Validation';
+      case 'invalidate': return 'Refus';
+      default: return item.action;
+    }
+  };
+
+  const getLogIcon = (item: HistoryItem) => {
+    if (item.action.includes('Plus') || item.action.includes('New') || item.action === 'create' || item.action === 'validate') {
+      return <PlusCircle className="w-4 h-4 text-primary" />;
+    }
+    if (item.action.includes('Moins') || item.action.includes('Supp') || item.action === 'delete' || item.action === 'invalidate') {
+      return <Trash2 className="w-4 h-4 text-destructive" />;
+    }
+    return <Edit className="w-4 h-4 text-amber-500" />;
+  };
 
   return (
     <div>
@@ -78,6 +112,7 @@ const History: React.FC = () => {
           <ButtonTab active={selectedType === 'sale'} onClick={() => setSelectedType('sale')}>Ventes</ButtonTab>
           <ButtonTab active={selectedType === 'product'} onClick={() => setSelectedType('product')}>Produits</ButtonTab>
           <ButtonTab active={selectedType === 'request'} onClick={() => setSelectedType('request')}>Demandes</ButtonTab>
+          <ButtonTab active={selectedType === 'category'} onClick={() => setSelectedType('category')}>Catégories</ButtonTab>
         </div>
         <div className="ml-auto max-w-md">
           <SearchInput value={search} onChange={setSearch} placeholder="Rechercher..." />
@@ -123,30 +158,20 @@ const History: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {h.type === 'sale' && h.action === 'create' && <ShoppingCart className="w-4 h-4 text-primary" />}
-                        {h.type === 'sale' && h.action === 'update' && <Edit className="w-4 h-4 text-amber-500" />}
-                        {h.type === 'sale' && h.action === 'delete' && <Trash2 className="w-4 h-4 text-destructive" />}
-                        {h.type === 'request' && h.action === 'validate' && <CheckCircle className="w-4 h-4 text-success" />}
-                        {h.type === 'request' && h.action === 'invalidate' && <XCircle className="w-4 h-4 text-warning" />}
-                        {h.type === 'product' && h.action === 'create' && <ShoppingCart className="w-4 h-4" />}
-                        <span className="font-medium">{h.type.toUpperCase()} — {h.action}</span>
+                        {getLogIcon(h)}
+                        <span className="font-medium">{h.type.toUpperCase()} — {getLogLabel(h)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       {h.productNom && <div className="font-medium">{h.productNom}</div>}
+                      {h.info && <div className="text-sm text-muted-foreground italic">{h.info}</div>}
                       {h.quantity !== undefined && <div>{h.quantity} boîtes</div>}
-                      {h.previousQuantity !== undefined && (
-                        <div className="text-sm text-muted-foreground">Avant: {h.previousQuantity}</div>
-                      )}
-                      {h.newQuantity !== undefined && (
-                        <div className="text-sm text-muted-foreground">Après: {h.newQuantity}</div>
-                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-xs font-medium text-primary">
-                            {h.userName ? h.userName.split(' ').map((n:any) => n[0]).join('') : '??'}
+                            {h.userName ? h.userName.split(' ').map((n: any) => n[0]).join('') : '??'}
                           </span>
                         </div>
                         {h.userName}

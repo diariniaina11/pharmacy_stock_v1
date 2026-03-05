@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, Sale, ProductRequest, User, ApiCategory, ApiFournisseur } from '@/types';
+import { Product, Sale, ProductRequest, User, ApiCategory, ApiFournisseur, SystemLog, HistoryItem } from '@/types';
 import api from '@/api/axios';
 
 interface DataContextType {
@@ -21,7 +21,7 @@ interface DataContextType {
   updateRequestStatus: (id: string, status: 'VALIDE' | 'REFUSE') => Promise<void>;
   addCategory: (nom: string) => Promise<ApiCategory>;
   refreshData: () => Promise<void>;
-  history: any[];
+  history: HistoryItem[];
 }
 
 
@@ -34,7 +34,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [fournisseurs, setFournisseurs] = useState<ApiFournisseur[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,6 +118,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         userName: r.user ? `${r.user.prenom} ${r.user.nom}` : 'Utilisateur inconnu',
       }));
       setRequests(mappedRequests);
+
+      // Fetch logs from API
+      const logsRes = await api.get('/logs');
+      const mappedHistory: HistoryItem[] = logsRes.data.map((l: SystemLog) => {
+        const userObj = mappedUsers.find(u => String(u.id) === String(l.user));
+
+        let type: HistoryItem['type'] = 'unknown';
+        if (l.action.startsWith('produit')) type = 'product';
+        else if (l.action.startsWith('vente')) type = 'sale';
+        else if (l.action.startsWith('categ')) type = 'category';
+
+        return {
+          id: String(l.id),
+          type,
+          action: l.action,
+          userId: String(l.user),
+          userName: userObj ? `${userObj.prenom} ${userObj.nom}` : `Utilisateur ${l.user}`,
+          info: l.info,
+          date: l.date,
+        };
+      });
+      setHistory(mappedHistory);
 
       // Categories and Fournisseurs are already fetched above
     } catch (err) {
@@ -285,8 +307,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (existingSale) {
         setProducts((prev) =>
           prev.map((p) =>
-            p.id === existingSale.productId
-              ? { ...p, quantiteBoites: p.quantiteBoites + existingSale.quantiteVendue }
+            p.id === existingSale.product_id
+              ? { ...p, quantiteBoites: p.quantiteBoites + existingSale.quantite_vendue }
               : p
           )
         );
@@ -297,11 +319,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             id: `sale-delete-${id}`,
             type: 'sale',
             action: 'delete',
-            userId: existingSale.userId,
+            userId: existingSale.user_id,
             userName: existingSale.userName,
-            productId: existingSale.productId,
-            productNom: existingSale.productNom,
-            quantity: existingSale.quantiteVendue,
+            productId: existingSale.product_id,
+            productNom: existingSale.product_nom,
+            quantity: existingSale.quantite_vendue,
             date: new Date().toISOString().split('T')[0],
           },
           ...prev,
@@ -322,14 +344,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const prev = sales.find((s) => s.id === id);
       if (!prev) throw new Error('Vente introuvable');
 
-      const requestedNewQty = updates.quantite_vendue !== undefined ? Number(updates.quantite_vendue) : prev.quantiteVendue;
+      const requestedNewQty = updates.quantite_vendue !== undefined ? Number(updates.quantite_vendue) : prev.quantite_vendue;
 
       // find related product locally
-      const productLocal = products.find((p) => p.id === String(prev.productId));
+      const productLocal = products.find((p) => p.id === String(prev.product_id));
       if (!productLocal) throw new Error('Produit introuvable');
 
       // if increasing sold quantity, ensure enough stock
-      const increase = requestedNewQty - prev.quantiteVendue;
+      const increase = requestedNewQty - prev.quantite_vendue;
       if (increase > 0 && productLocal.quantiteBoites < increase) {
         throw new Error('Stock insuffisant pour cette modification');
       }
@@ -358,20 +380,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: `sale-update-${id}`,
           type: 'sale',
           action: 'update',
-          userId: mappedSale.userId,
+          userId: mappedSale.user_id,
           userName: mappedSale.userName,
-          productId: mappedSale.productId,
-          productNom: mappedSale.productNom,
-          previousQuantity: prev.find((h) => h.type === 'sale' && h.action === 'create' && h.productId === mappedSale.productId)?.quantity ?? null,
-          newQuantity: mappedSale.quantiteVendue,
-          date: mappedSale.date,
+          productId: mappedSale.product_id,
+          productNom: mappedSale.product_nom,
+          previousQuantity: prev.find((h: any) => h.type === 'sale' && h.action === 'create' && h.productId === mappedSale.product_id)?.quantity ?? null,
+          newQuantity: mappedSale.quantite_vendue,
+          date: mappedSale.date_vente,
         },
         ...prev,
       ]);
 
       // adjust product stock locally based on difference between previous and updated quantities
       const productId = String(updated.product_id);
-      const delta = prev.quantiteVendue - mappedSale.quantiteVendue; // positive => increase stock, negative => decrease
+      const delta = prev.quantite_vendue - mappedSale.quantite_vendue; // positive => increase stock, negative => decrease
       setProducts((prevProducts) =>
         prevProducts.map((p) =>
           p.id === productId ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites + delta) } : p
