@@ -141,12 +141,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       setHistory(mappedHistory);
 
-      // Categories and Fournisseurs are already fetched above
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Erreur lors du chargement des données du serveur');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const createLog = async (action: string, info: string) => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      const currentUser = storedUser ? JSON.parse(storedUser) : null;
+      const userId = currentUser ? currentUser.id : 1;
+
+      await api.post('/logs', {
+        action,
+        info,
+        user: userId,
+        date: new Date().toLocaleString('sv-SE'), // Format: YYYY-MM-DD HH:MM:SS
+      });
+    } catch (err) {
+      console.error('Error creating log:', err);
     }
   };
 
@@ -156,27 +172,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addProduct = async (product: any) => {
     try {
-      // In the new structure, product already contains categorie_id and fournisseur_id
       const response = await api.post('/products', product);
-
-      // After success, refresh data to get the new product with its generated ID and mapped fields
       const created = response.data;
       await fetchData();
 
-      // add history entry
-      setHistory((prev) => [
-        {
-          id: `product-create-${created.id}`,
-          type: 'product',
-          action: 'create',
-          userId: product.user_id || null,
-          userName: product.userName || 'Utilisateur inconnu',
-          productId: String(created.id),
-          productNom: created.nom,
-          date: created.created_at || new Date().toISOString().split('T')[0],
-        },
-        ...prev,
-      ]);
+      // Log action
+      await createLog('produitNew', `Ajout du nouveau produit: ${created.nom}`);
     } catch (err) {
       console.error('Error adding product:', err);
       throw err;
@@ -185,22 +186,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProduct = async (id: string, updates: any) => {
     try {
+      const oldProduct = products.find(p => p.id === id);
       await api.put(`/products/${id}`, updates);
       await fetchData();
 
-      setHistory((prev) => [
-        {
-          id: `product-update-${id}`,
-          type: 'product',
-          action: 'update',
-          userId: updates.user_id || null,
-          userName: updates.userName || 'Utilisateur inconnu',
-          productId: id,
-          productNom: updates.nom || null,
-          date: new Date().toISOString().split('T')[0],
-        },
-        ...prev,
-      ]);
+      if (oldProduct) {
+        if (updates.quantite_boites !== undefined) {
+          const diff = Number(updates.quantite_boites) - oldProduct.quantiteBoites;
+          if (diff > 0) {
+            await createLog('produitPlus', `Augmentation du stock pour ${oldProduct.nom} (+${diff})`);
+          } else if (diff < 0) {
+            await createLog('produitMoins', `Diminution du stock pour ${oldProduct.nom} (${diff})`);
+          } else {
+            await createLog('produitPlus', `Mise à jour du produit: ${oldProduct.nom}`);
+          }
+        } else {
+          await createLog('produitPlus', `Mise à jour du produit: ${oldProduct.nom}`);
+        }
+      }
     } catch (err) {
       console.error('Error updating product:', err);
       throw err;
@@ -209,84 +212,31 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteProduct = async (id: string) => {
     try {
+      const productToDelete = products.find(p => p.id === id);
       await api.delete(`/products/${id}`);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      setHistory((prev) => [
-        {
-          id: `product-delete-${id}`,
-          type: 'product',
-          action: 'delete',
-          userId: null,
-          userName: 'Utilisateur inconnu',
-          productId: id,
-          productNom: null,
-          date: new Date().toISOString().split('T')[0],
-        },
-        ...prev,
-      ]);
+      await fetchData();
+
+      if (productToDelete) {
+        await createLog('produitSupp', `Suppression du produit: ${productToDelete.nom}`);
+      }
     } catch (err) {
       console.error('Error deleting product:', err);
       throw err;
     }
   };
 
-  const addSale = async (sale: Omit<Sale, 'id'>) => {
-
+  const addSale = async (sale: any) => {
     try {
-      // Ensure product exists locally and has enough stock before calling API
       const productLocal = products.find((p) => p.id === String(sale.product_id));
-      if (!productLocal) {
-        throw new Error('Produit non trouvé');
-      }
-      if (productLocal.quantiteBoites < (sale as any).quantite_vendue) {
-        throw new Error('Stock insuffisant');
-      }
+      if (!productLocal) throw new Error('Produit non trouvé');
+      if (productLocal.quantiteBoites < sale.quantite_vendue) throw new Error('Stock insuffisant');
 
       const response = await api.post('/sales', sale);
-
       const created = response.data;
+      await fetchData();
 
-      const mappedSale: Sale = {
-        id: String(created.id),
-        product_id: String(created.product_id),
-        product_nom: created.product?.nom || 'Produit inconnu',
-        quantite_vendue: created.quantite_vendue,
-        date_vente: created.date_vente,
-        createdAt: created.created_at,
-        user_id: String(created.user_id),
-        userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
-      };
-
-      // Prepend the new sale so it's visible immediately
-      setSales((prev) => [mappedSale, ...prev]);
-
-      // add history entry
-      setHistory((prev) => [
-        {
-          id: `sale-create-${created.id}`,
-          type: 'sale',
-          action: 'create',
-          userId: String(created.user_id),
-          userName: created.user ? `${created.user.prenom} ${created.user.nom}` : 'Utilisateur inconnu',
-          productId: String(created.product_id),
-          productNom: created.product?.nom || 'Produit inconnu',
-          quantity: created.quantite_vendue,
-          date: created.date_vente,
-        },
-        ...prev,
-      ]);
-
-      // Update product stock locally
-      const product = products.find((p) => p.id === String(created.product_id));
-      if (product) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === String(created.product_id)
-              ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites - created.quantite_vendue) }
-              : p
-          )
-        );
-      }
+      // Log action
+      await createLog('venteNew', `Nouvelle vente: ${created.product?.nom || 'Produit'} (${created.quantite_vendue} boîtes)`);
     } catch (err) {
       console.error('Error adding sale:', err);
       throw err;
@@ -295,43 +245,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteSale = async (id: string) => {
     try {
-      // find the sale locally to adjust product stock immediately
       const existingSale = sales.find((s) => s.id === id);
-
       await api.delete(`/sales/${id}`);
-
-      // remove sale from local state
-      setSales((prev) => prev.filter((s) => s.id !== id));
-
-      // if we had the sale, restore the product quantity locally
-      if (existingSale) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === existingSale.product_id
-              ? { ...p, quantiteBoites: p.quantiteBoites + existingSale.quantite_vendue }
-              : p
-          )
-        );
-
-        // add history entry for deletion
-        setHistory((prev) => [
-          {
-            id: `sale-delete-${id}`,
-            type: 'sale',
-            action: 'delete',
-            userId: existingSale.user_id,
-            userName: existingSale.userName,
-            productId: existingSale.product_id,
-            productNom: existingSale.product_nom,
-            quantity: existingSale.quantite_vendue,
-            date: new Date().toISOString().split('T')[0],
-          },
-          ...prev,
-        ]);
-      }
-
-      // refresh from server to ensure consistency
       await fetchData();
+
+      if (existingSale) {
+        // Log action
+        await createLog('venteSupp', `Suppression de la vente: ${existingSale.product_nom}`);
+      }
     } catch (err) {
       console.error('Error deleting sale:', err);
       throw err;
@@ -340,68 +261,35 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateSale = async (id: string, updates: any) => {
     try {
-      // find previous sale to compute stock delta and validate
       const prev = sales.find((s) => s.id === id);
       if (!prev) throw new Error('Vente introuvable');
 
       const requestedNewQty = updates.quantite_vendue !== undefined ? Number(updates.quantite_vendue) : prev.quantite_vendue;
-
-      // find related product locally
       const productLocal = products.find((p) => p.id === String(prev.product_id));
       if (!productLocal) throw new Error('Produit introuvable');
 
-      // if increasing sold quantity, ensure enough stock
       const increase = requestedNewQty - prev.quantite_vendue;
       if (increase > 0 && productLocal.quantiteBoites < increase) {
         throw new Error('Stock insuffisant pour cette modification');
       }
 
-      const response = await api.put(`/sales/${id}`, updates);
-      const updated = response.data;
-
-      // map updated sale to frontend shape
-      const mappedSale: Sale = {
-        id: String(updated.id),
-        product_id: String(updated.product_id),
-        product_nom: updated.product?.nom || 'Produit inconnu',
-        quantite_vendue: updated.quantite_vendue,
-        date_vente: updated.date_vente,
-        createdAt: updated.created_at,
-        user_id: String(updated.user_id),
-        userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
-      };
-
-      // update sales list locally
-      setSales((prevList) => prevList.map((s) => (s.id === id ? mappedSale : s)));
-
-      // add history entry for update
-      setHistory((prev) => [
-        {
-          id: `sale-update-${id}`,
-          type: 'sale',
-          action: 'update',
-          userId: mappedSale.user_id,
-          userName: mappedSale.userName,
-          productId: mappedSale.product_id,
-          productNom: mappedSale.product_nom,
-          previousQuantity: prev.find((h: any) => h.type === 'sale' && h.action === 'create' && h.productId === mappedSale.product_id)?.quantity ?? null,
-          newQuantity: mappedSale.quantite_vendue,
-          date: mappedSale.date_vente,
-        },
-        ...prev,
-      ]);
-
-      // adjust product stock locally based on difference between previous and updated quantities
-      const productId = String(updated.product_id);
-      const delta = prev.quantite_vendue - mappedSale.quantite_vendue; // positive => increase stock, negative => decrease
-      setProducts((prevProducts) =>
-        prevProducts.map((p) =>
-          p.id === productId ? { ...p, quantiteBoites: Math.max(0, p.quantiteBoites + delta) } : p
-        )
-      );
-
-      // refresh from server to ensure full consistency
+      await api.put(`/sales/${id}`, updates);
       await fetchData();
+
+      // Find updated sale to get fresh product info
+      const refreshedSales = (await api.get('/sales')).data;
+      const updated = refreshedSales.find((s: any) => String(s.id) === String(id));
+
+      if (prev && updated) {
+        const diff = updated.quantite_vendue - prev.quantite_vendue;
+        if (diff > 0) {
+          // user requested: venteMoins (augmenter le nombre de vente)
+          await createLog('venteMoins', `Augmentation de la vente pour ${updated.product?.nom || 'Produit'} (+${diff})`);
+        } else if (diff < 0) {
+          // user requested: ventePlus (diminuer le nombre de vente)
+          await createLog('ventePlus', `Diminution de la vente pour ${updated.product?.nom || 'Produit'} (${diff})`);
+        }
+      }
     } catch (err) {
       console.error('Error updating sale:', err);
       throw err;
@@ -410,7 +298,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addRequest = async (request: Omit<ProductRequest, 'id' | 'status' | 'dateCreation'>) => {
     try {
-      // Send to backend API
       const payload: any = {
         product_id: request.productId || null,
         quantite_demandee: request.quantiteDemandee,
@@ -418,39 +305,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user_id: request.userId || null,
       };
 
-      const response = await api.post('/product-requests', payload);
-      const created = response.data;
-
-      const mapped: ProductRequest = {
-        id: String(created.id),
-        productId: created.product_id ? String(created.product_id) : undefined,
-        productNom: created.product?.nom || request.productNom || 'Produit inconnu',
-        quantiteDemandee: created.quantite_demandee,
-        commentaire: created.commentaire || '',
-        status: created.status,
-        dateCreation: created.date_creation,
-        userId: created.user_id ? String(created.user_id) : String(request.userId || ''),
-        userName: created.user ? `${created.user.prenom} ${created.user.nom}` : request.userName || 'Utilisateur inconnu',
-      };
-
-      // prepend to local state
-      setRequests((prev) => [mapped, ...prev]);
-
-      // add history entry
-      setHistory((prev) => [
-        {
-          id: `request-create-${created.id}`,
-          type: 'request',
-          action: 'create',
-          userId: mapped.userId || null,
-          userName: mapped.userName || 'Utilisateur inconnu',
-          productId: mapped.productId || null,
-          productNom: mapped.productNom || null,
-          quantity: mapped.quantiteDemandee,
-          date: (mapped.dateCreation || new Date().toISOString()).split('T')[0],
-        },
-        ...prev,
-      ]);
+      await api.post('/product-requests', payload);
+      await fetchData();
     } catch (err) {
       console.error('Error adding request:', err);
       throw err;
@@ -459,63 +315,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateRequestStatus = async (id: string, status: 'VALIDE' | 'REFUSE') => {
     try {
-      // Call backend to update status
-      const response = await api.put(`/product-requests/${id}`, { status });
-      const updated = response.data;
-
-      const mapped: ProductRequest = {
-        id: String(updated.id),
-        productId: updated.product_id ? String(updated.product_id) : undefined,
-        productNom: updated.product?.nom || 'Produit inconnu',
-        quantiteDemandee: updated.quantite_demandee,
-        commentaire: updated.commentaire || '',
-        status: updated.status,
-        dateCreation: updated.date_creation,
-        userId: updated.user_id ? String(updated.user_id) : '',
-        userName: updated.user ? `${updated.user.prenom} ${updated.user.nom}` : 'Utilisateur inconnu',
-      };
-
-      // update local requests list
-      setRequests((prev) => prev.map((r) => (r.id === mapped.id ? mapped : r)));
-
-      if (mapped.status === 'VALIDE' && mapped.productId) {
-        // increase product stock
-        setProducts((prev) =>
-          prev.map((p) => (p.id === mapped.productId ? { ...p, quantiteBoites: p.quantiteBoites + mapped.quantiteDemandee } : p))
-        );
-
-        setHistory((prev) => [
-          {
-            id: `request-validate-${mapped.id}`,
-            type: 'request',
-            action: 'validate',
-            userId: mapped.userId || null,
-            userName: mapped.userName || 'Utilisateur inconnu',
-            productId: mapped.productId || null,
-            productNom: mapped.productNom || null,
-            quantity: mapped.quantiteDemandee || null,
-            date: new Date().toISOString().split('T')[0],
-          },
-          ...prev,
-        ]);
-      }
-
-      if (mapped.status === 'REFUSE') {
-        setHistory((prev) => [
-          {
-            id: `request-refuse-${mapped.id}`,
-            type: 'request',
-            action: 'invalidate',
-            userId: mapped.userId || null,
-            userName: mapped.userName || 'Utilisateur inconnu',
-            productId: mapped.productId || null,
-            productNom: mapped.productNom || null,
-            quantity: mapped.quantiteDemandee || null,
-            date: new Date().toISOString().split('T')[0],
-          },
-          ...prev,
-        ]);
-      }
+      await api.put(`/product-requests/${id}`, { status });
+      await fetchData();
     } catch (err) {
       console.error('Error updating request status:', err);
       throw err;
@@ -530,6 +331,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         nom: response.data.nom,
       };
       setCategories((prev) => [...prev, newCategory]);
+
+      // Log action
+      await createLog('categNew', `Nouvelle catégorie: ${newCategory.nom}`);
+
       return newCategory;
     } catch (err) {
       console.error('Error adding category:', err);
