@@ -36,7 +36,7 @@ const History: React.FC = () => {
   const filteredHistory = useMemo(() => {
     let items = history;
     if (!isAdmin) {
-      items = items.filter((h: any) => h.userId === user?.id);
+      items = items.filter((h: any) => String(h.userId) === String(user?.id));
     }
     if (selectedType !== 'all') {
       items = items.filter((h: any) => h.type === selectedType);
@@ -96,12 +96,11 @@ const History: React.FC = () => {
         }
       />
 
-      {/* Search */}
       <div className="mb-6 max-w-md">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Rechercher par produit ou vendeur..."
+          placeholder={isAdmin ? "Rechercher par produit ou vendeur..." : "Rechercher un produit..."}
         />
       </div>
 
@@ -113,9 +112,6 @@ const History: React.FC = () => {
           <ButtonTab active={selectedType === 'product'} onClick={() => setSelectedType('product')}>Produits</ButtonTab>
           <ButtonTab active={selectedType === 'request'} onClick={() => setSelectedType('request')}>Demandes</ButtonTab>
           <ButtonTab active={selectedType === 'category'} onClick={() => setSelectedType('category')}>Catégories</ButtonTab>
-        </div>
-        <div className="ml-auto max-w-md">
-          <SearchInput value={search} onChange={setSearch} placeholder="Rechercher..." />
         </div>
       </div>
 
