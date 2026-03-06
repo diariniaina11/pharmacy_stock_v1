@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {

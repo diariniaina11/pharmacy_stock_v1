@@ -1,5 +1,5 @@
 import React, { useMemo, useState, MouseEventHandler } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '@/contexts/AppServiceContext';
 import { useAuth } from '@/hooks/useAuth';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';

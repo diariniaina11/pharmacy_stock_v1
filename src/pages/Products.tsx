@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';

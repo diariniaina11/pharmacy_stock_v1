@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { DataProvider } from "@/contexts/DataContext";
+import { DataProvider } from "@/contexts/AppServiceContext";
 import MainLayout from "@/components/layout/MainLayout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -15,7 +15,7 @@ import Requests from "@/pages/Requests";
 import Validation from "@/pages/Validation";
 import History from "@/pages/History";
 import NotFound from "./pages/NotFound";
-import { AuthProvider } from "./context/AuthProvider";
+import { AuthProvider } from "./contexts/AuthProvider";
 import ProtectedRoute from "@/authguard/ProtectedRoute";
 import ActivityTracker from "@/components/ActivityTracker";
 

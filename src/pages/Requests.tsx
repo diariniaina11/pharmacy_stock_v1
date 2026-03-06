@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
 import { Package, AlertTriangle, XCircle, Users, TrendingUp, ShoppingCart } from 'lucide-react';
