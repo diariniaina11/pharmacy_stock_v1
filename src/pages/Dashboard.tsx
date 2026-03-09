@@ -65,12 +65,26 @@ const Dashboard: React.FC = () => {
 
     const computeActiveUsers = (allUsers: any[]) => {
       const now = Date.now();
-      const active = allUsers.filter((u) => {
+      const onlineUsers = allUsers.filter((u) => {
         const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
         const ms = parseTimestampToMillis(updatedAt);
         if (!ms) return false;
         return (now - ms) <= 60000;
-      }).length;
+      });
+      const active = onlineUsers.length;
+      // Log online user IDs
+      console.log('Utilisateurs en ligne:', onlineUsers.map(u => u.id || u.name || 'inconnu'));
+      // Log time difference for each user
+      allUsers.forEach((u) => {
+        const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
+        const ms = parseTimestampToMillis(updatedAt);
+        if (ms) {
+          const diffSec = Math.floor((now - ms) / 1000);
+          console.log(`Utilisateur ${u.id || u.name || 'inconnu'}: écart = ${diffSec} secondes`);
+        } else {
+          console.log(`Utilisateur ${u.id || u.name || 'inconnu'}: updated_at invalide`);
+        }
+      });
       if (mounted) setActiveUsersCount(active);
     };
 
