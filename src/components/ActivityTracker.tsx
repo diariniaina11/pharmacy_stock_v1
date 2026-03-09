@@ -7,9 +7,9 @@ import { useUserActivityTimer } from '@/hooks/useUserActivityTimer';
  */
 export const ActivityTracker = () => {
   const { auth, isAuthenticated } = useAuth();
-  
+
   // Le timer continue même si d'autres composants se démontent
-  useUserActivityTimer(isAuthenticated ? auth?.id : null, 60000);
+  useUserActivityTimer(isAuthenticated ? auth?.id : null, 30000);
 
   // Ce composant n'affiche rien, il gère just le timer en arrière-plan
   return null;

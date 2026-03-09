@@ -76,10 +76,10 @@ const Dashboard: React.FC = () => {
         const ms = parseTimestampToMillis(updatedAt);
         if (!ms) return false;
 
-        // Active if updated within the last 3 minutes (180000ms)
+        // Active if updated within the last 60 seconds (60000ms)
         // Also handle slight future drift (up to 30s) from server clock
         const diffMs = now - ms;
-        return diffMs <= 180000 && diffMs >= -30000;
+        return diffMs <= 60000 && diffMs >= -30000;
       });
 
       if (mounted) setActiveUsersCount(onlineUsers.length);
@@ -171,7 +171,7 @@ const Dashboard: React.FC = () => {
           value={activeUsersCount}
           icon={Users}
           variant="success"
-          subtitle="Actifs (3 min)"
+          subtitle="Actifs (1 min)"
         />
       </div>
 
