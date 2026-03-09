@@ -47,16 +47,22 @@ const Dashboard: React.FC = () => {
   const parseTimestampToMillis = (tsValue: any): number | null => {
     if (!tsValue) return null;
     const s = String(tsValue).trim();
-    // Try ISO-like: replace space with T and assume UTC
-    const isoAttempt = s.replace(' ', 'T') + 'Z';
-    let t = Date.parse(isoAttempt);
+
+    // Direct parse for standard ISO (handles 'Z' correctly)
+    let t = Date.parse(s);
     if (!isNaN(t)) return t;
-    // Try without Z (local)
-    t = Date.parse(s.replace(' ', 'T'));
+
+    // Handle SQL space format: "YYYY-MM-DD HH:MM:SS"
+    const isoFormat = s.replace(' ', 'T');
+    t = Date.parse(isoFormat);
     if (!isNaN(t)) return t;
-    // Try direct parse
-    t = Date.parse(s);
-    if (!isNaN(t)) return t;
+
+    // If still failing and no timezone info, try assuming UTC
+    if (!isoFormat.includes('Z') && !isoFormat.includes('+')) {
+      t = Date.parse(isoFormat + 'Z');
+      if (!isNaN(t)) return t;
+    }
+
     return null;
   };
 
@@ -66,26 +72,17 @@ const Dashboard: React.FC = () => {
     const computeActiveUsers = (allUsers: any[]) => {
       const now = Date.now();
       const onlineUsers = allUsers.filter((u) => {
-        const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
+        const updatedAt = u?.updated_at || u?.updatedAt;
         const ms = parseTimestampToMillis(updatedAt);
         if (!ms) return false;
-        return (now - ms) <= 60000;
+
+        // Active if updated within the last 3 minutes (180000ms)
+        // Also handle slight future drift (up to 30s) from server clock
+        const diffMs = now - ms;
+        return diffMs <= 180000 && diffMs >= -30000;
       });
-      const active = onlineUsers.length;
-      // Log online user IDs
-      console.log('Utilisateurs en ligne:', onlineUsers.map(u => u.id || u.name || 'inconnu'));
-      // Log time difference for each user
-      allUsers.forEach((u) => {
-        const updatedAt = u?.updated_at || u?.updatedAt || u?.updatedAt;
-        const ms = parseTimestampToMillis(updatedAt);
-        if (ms) {
-          const diffSec = Math.floor((now - ms) / 1000);
-          console.log(`Utilisateur ${u.id || u.name || 'inconnu'}: écart = ${diffSec} secondes`);
-        } else {
-          console.log(`Utilisateur ${u.id || u.name || 'inconnu'}: updated_at invalide`);
-        }
-      });
-      if (mounted) setActiveUsersCount(active);
+
+      if (mounted) setActiveUsersCount(onlineUsers.length);
     };
 
     const fetchAndCompute = async () => {
@@ -174,7 +171,7 @@ const Dashboard: React.FC = () => {
           value={activeUsersCount}
           icon={Users}
           variant="success"
-          subtitle="Actifs (1 min)"
+          subtitle="Actifs (3 min)"
         />
       </div>
 

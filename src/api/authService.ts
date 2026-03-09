@@ -12,17 +12,8 @@ export const updateUserActivity = async (userId: string | number): Promise<boole
       return false;
     }
 
-    // Formater la date au format MySQL: "2026-02-03 11:38:07"
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    
-    const formatted = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    
+    const formatted = new Date().toISOString();
+
     const response = await axios.patch(`/users/${userId}`, {
       updated_at: formatted,
     });
@@ -53,18 +44,18 @@ export const verifyUserWithServer = async (user: any): Promise<boolean> => {
     // Utiliser l'email comme identifiant principal
     const identifier = user.email || user.id;
     const response = await axios.get(`/users/${encodeURI(identifier)}`);
-    
+
     // Si la requête est successful, vérifier que les données correspondent
     if (response.data) {
       // Vérifier que les données clés correspondent
-      const isValid = 
+      const isValid =
         response.data.email === user.email ||
         response.data.id === user.id ||
         (response.data.prenom === user.prenom && response.data.nom === user.nom);
-      
+
       return isValid;
     }
-    
+
     return false;
   } catch (error: any) {
     // Si la requête échoue (utilisateur non trouvé, serveur down, etc.)
@@ -80,11 +71,11 @@ export const verifyUserWithServer = async (user: any): Promise<boolean> => {
  */
 export const isUserDataValid = (user: any): boolean => {
   if (!user) return false;
-  
+
   // Vérifier que les champs essentiels existent
-  const hasEssentialFields = 
+  const hasEssentialFields =
     (user.email || user.id) && // Au moins email ou id
     (user.prenom || user.nom); // Au moins prénom ou nom
-  
+
   return hasEssentialFields;
 };
