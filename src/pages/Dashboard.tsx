@@ -86,8 +86,8 @@ const Dashboard: React.FC = () => {
 
     // initial fetch
     fetchAndCompute();
-    // refresh every minute
-    const id = setInterval(fetchAndCompute, 60000);
+    // refresh every 30 seconds
+    const id = setInterval(fetchAndCompute, 30000);
 
     return () => {
       mounted = false;
