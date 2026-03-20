@@ -332,7 +332,7 @@ const Products: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="prix">Prix (€)</Label>
+                        <Label htmlFor="prix">Prix (Ar)</Label>
                         <Input
                           id="prix"
                           type="number"
@@ -445,7 +445,7 @@ const Products: React.FC = () => {
                         {product.quantiteBoites} boîtes
                       </span>
                     </TableCell>
-                    <TableCell>{product.prix.toFixed(2)} €</TableCell>
+                    <TableCell>{product.prix.toFixed(2)} Ar</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {isAdmin ? (

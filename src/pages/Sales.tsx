@@ -169,7 +169,7 @@ const Sales: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground">Prix unitaire</p>
-                          <p className="font-medium">{selectedProductData.prix.toFixed(2)} €</p>
+                          <p className="font-medium">{selectedProductData.prix.toFixed(2)} Ar</p>
                         </div>
                       </div>
                     </CardContent>
@@ -193,7 +193,7 @@ const Sales: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Total</span>
                       <span className="text-xl font-bold text-primary">
-                        {(selectedProductData.prix * quantity).toFixed(2)} €
+                        {(selectedProductData.prix * quantity).toFixed(2)} Ar
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
