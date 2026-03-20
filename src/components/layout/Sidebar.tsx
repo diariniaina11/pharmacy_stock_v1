@@ -47,7 +47,7 @@ const Sidebar: React.FC = () => {
             <Pill className="w-6 h-6 text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">PharmaSys</h1>
+              <h1 className="font-bold text-lg">PharmaFlow</h1>
             <p className="text-xs text-sidebar-foreground/70">Gestion de pharmacie</p>
           </div>
         </div>
