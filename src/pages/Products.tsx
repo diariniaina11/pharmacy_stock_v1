@@ -407,7 +407,7 @@ const Products: React.FC = () => {
         </div>
 
         {/* Table scrollable et limité */}
-        <div className="table-container" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+        <div className="table-container">
           <Table>
             <TableHeader>
               <TableRow>
@@ -420,70 +420,74 @@ const Products: React.FC = () => {
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {filteredProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">Aucun produit trouvé</p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredProducts.slice(0, 10).map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{product.nom}</p>
-                        <p className="text-sm text-muted-foreground">{product.fournisseur}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.categorie}</TableCell>
-                    <TableCell className="font-mono text-sm">{product.numeroLot}</TableCell>
-                    <TableCell>{new Date(product.datePeremption).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>
-                      <span className={getStockStatus(product.quantiteBoites)}>
-                        {product.quantiteBoites} boîtes
-                      </span>
-                    </TableCell>
-                    <TableCell>{product.prix.toFixed(2)} Ar</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {isAdmin ? (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(product)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(product.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Demander quantité pour ${product.nom}`}
-                            title="Demander"
-                            onClick={() => openRequestDialog(product)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+          </Table>
+          <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+            <Table>
+              <TableBody>
+                {filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">Aucun produit trouvé</p>
                     </TableCell>
                   </TableRow>
-                )
-                ))}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredProducts.slice(0, 10).map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{product.nom}</p>
+                          <p className="text-sm text-muted-foreground">{product.fournisseur}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{product.categorie}</TableCell>
+                      <TableCell className="font-mono text-sm">{product.numeroLot}</TableCell>
+                      <TableCell>{new Date(product.datePeremption).toLocaleDateString('fr-FR')}</TableCell>
+                      <TableCell>
+                        <span className={getStockStatus(product.quantiteBoites)}>
+                          {product.quantiteBoites} boîtes
+                        </span>
+                      </TableCell>
+                      <TableCell>{product.prix.toFixed(2)} Ar</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {isAdmin ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(product)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(product.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Demander quantité pour ${product.nom}`}
+                              title="Demander"
+                              onClick={() => openRequestDialog(product)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
       {/* Request Dialog */}
