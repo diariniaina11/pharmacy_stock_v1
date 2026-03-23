@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
     <div>
       <PageHeader
         title={`Bonjour, ${auth?.prenom} !`}
-        description="Voici un aperçu de votre pharmacie"
+        description="Bienvenue sur le tableau de bord de votre pharmacie"
       />
 
       {/* Stats Grid */}
