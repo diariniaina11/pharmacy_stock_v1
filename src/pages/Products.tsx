@@ -407,7 +407,7 @@ const Products: React.FC = () => {
         </div>
 
         {/* Table scrollable et limité */}
-        <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="table-container" style={{ maxHeight: '600px', overflowY: 'auto' }}>
           <Table>
             <TableHeader>
               <TableRow>
