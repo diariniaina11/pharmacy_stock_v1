@@ -71,7 +71,7 @@ Les composants s'abonnent au contexte pour afficher les données. Ils n'appellen
 Exemple :
 const Dashboard = () => {
   // Récupération des données depuis le contexte
-  const { users } = useData(); 
+  const { users } = useData();
   
   return (
     <div>Il y a {users.length} utilisateurs</div>

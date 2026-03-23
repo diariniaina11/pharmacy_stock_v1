@@ -406,8 +406,8 @@ const Products: React.FC = () => {
           </Select>
         </div>
 
-        {/* Table */}
-        <div className="table-container">
+        {/* Table scrollable et limité */}
+        <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -429,7 +429,7 @@ const Products: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProducts.map((product) => (
+                filteredProducts.slice(0, 10).map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div>
