@@ -98,7 +98,7 @@ Composant wrapper pour protéger les routes. Redirige vers `/login` si l'utilisa
 - `/peremptions` - Gestion des péremptions
 - `/demandes` - Gestion des demandes
 - `/validation` - Validation des demandes
-- `/historique` - Historique des opérations
+- `/historique` - Journal d'activité (logs)
 
 ## Données dans localStorage
 
@@ -116,7 +116,7 @@ Composant wrapper pour protéger les routes. Redirige vers `/login` si l'utilisa
 
 ### Données métier (nettoyées à la déconnexion)
 - `pharmacy_products` - Liste des produits
-- `pharmacy_sales` - Historique des ventes
+- `pharmacy_sales` - Journal des ventes
 - `pharmacy_requests` - Demandes de produits
 
 ## Utilisation dans les composants
