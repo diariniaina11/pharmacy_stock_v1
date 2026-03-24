@@ -12,7 +12,7 @@ import Products from "@/pages/Products";
 import Sales from "@/pages/Sales";
 import Expirations from "@/pages/Expirations";
 import Requests from "@/pages/Requests";
-import Validation from "@/pages/Validation";
+// import Validation from "@/pages/Validation";
 import History from "@/pages/History";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthProvider";
@@ -49,7 +49,7 @@ const App = () => (
                 <Route path="/ventes" element={<Sales />} />
                 <Route path="/peremptions" element={<Expirations />} />
                 <Route path="/demandes" element={<Requests />} />
-                <Route path="/validation" element={<Validation />} />
+                {/* <Route path="/validation" element={<Validation />} /> */}
                 <Route path="/historique" element={<History />} />
               </Route>
 

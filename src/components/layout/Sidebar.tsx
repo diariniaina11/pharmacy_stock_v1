@@ -29,7 +29,6 @@ const Sidebar: React.FC = () => {
     { to: '/ventes', icon: ShoppingCart, label: 'Ventes' },
     { to: '/peremptions', icon: AlertTriangle, label: 'Péremptions' },
     { to: '/demandes', icon: FileText, label: 'Demandes' },
-    { to: '/validation', icon: CheckSquare, label: 'Validation' },
     { to: '/historique', icon: History, label: 'Historique' },
   ];
 
