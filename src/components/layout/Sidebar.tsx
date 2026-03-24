@@ -29,7 +29,7 @@ const Sidebar: React.FC = () => {
     { to: '/ventes', icon: ShoppingCart, label: 'Ventes' },
     { to: '/peremptions', icon: AlertTriangle, label: 'Péremptions' },
     { to: '/demandes', icon: FileText, label: 'Demandes' },
-    { to: '/historique', icon: History, label: 'Historique' },
+    { to: '/historique', icon: History, label: "Journal d'activité" },
   ];
 
   const handleLogout = () => {

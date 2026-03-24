@@ -88,11 +88,11 @@ const History: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Historique"
+        title="Journal d'activité"
         description={
           isAdmin
-            ? 'Historique complet de toutes les ventes'
-            : 'Historique de vos ventes personnelles'
+            ? "Toutes les activités et ventes enregistrées dans la pharmacie"
+            : "Historique de vos activités personnelles"
         }
       />
 
@@ -138,7 +138,7 @@ const History: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">Aucun historique</p>
+                    <p className="text-muted-foreground">Aucune activité enregistrée</p>
                   </TableCell>
                 </TableRow>
               ) : (
