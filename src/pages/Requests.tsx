@@ -33,8 +33,10 @@ import { toast } from 'sonner';
 
 const Requests: React.FC = () => {
   const { products, requests, addRequest, updateRequestStatus } = useData();
-  const isAdmin = true;
-  const user = { id: 'admin', prenom: 'Admin', nom: 'System' };
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const isAdmin = user?.role === 'ADMIN';
+  const isVendeur = user?.role === 'VENDEUR';
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -266,7 +268,7 @@ const Requests: React.FC = () => {
                 <TableHead>Date</TableHead>
                 {isAdmin && <TableHead>Demandeur</TableHead>}
                 <TableHead>Statut</TableHead>
-                {isAdmin && <TableHead>Actions</TableHead>}
+                {!isVendeur && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -288,7 +290,7 @@ const Requests: React.FC = () => {
                       </TableCell>
                       {isAdmin && <TableCell>{request.userName}</TableCell>}
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      {isAdmin && (
+                      {!isVendeur && (
                         <TableCell>
                           <div className="flex gap-2">
                             <Button

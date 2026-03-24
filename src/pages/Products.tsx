@@ -417,9 +417,7 @@ const Products: React.FC = () => {
                 <TableHead>Péremption</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Prix</TableHead>
-                {isAdmin && (
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                )}
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
           </Table>
@@ -451,27 +449,39 @@ const Products: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>{product.prix.toFixed(2)} Ar</TableCell>
-                      {isAdmin && (
-                        <TableCell>
-                          <div className="flex gap-2">
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {isAdmin ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(product)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(product.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleEdit(product)}
+                              aria-label={`Demander quantité pour ${product.nom}`}
+                              title="Demander"
+                              onClick={() => openRequestDialog(product)}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Plus className="w-4 h-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(product.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   )
                   ))}
