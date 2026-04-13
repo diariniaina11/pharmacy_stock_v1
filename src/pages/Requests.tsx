@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
+import { normalizeUserRole } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +35,10 @@ import { toast } from 'sonner';
 const Requests: React.FC = () => {
   const { products, requests, addRequest, updateRequestStatus } = useData();
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  const user = parsedUser
+    ? { ...parsedUser, role: normalizeUserRole(parsedUser.role) || parsedUser.role }
+    : null;
   const isAdmin = user?.role === 'ADMIN';
   const isVendeur = user?.role === 'VENDEUR';
 

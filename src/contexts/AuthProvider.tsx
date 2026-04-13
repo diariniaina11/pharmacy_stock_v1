@@ -1,5 +1,6 @@
 import { useState, createContext, useEffect, ReactNode } from "react";
 import { verifyUserWithServer, isUserDataValid } from "@/api/authService";
+import { normalizeUserRole } from "@/lib/utils";
 
 interface User {
   id?: string;
@@ -33,6 +34,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
+          const normalizedRole = normalizeUserRole(user.role);
+          if (normalizedRole) {
+            user.role = normalizedRole;
+          }
           
           // Vérification 1: Les données sont-elles valides structurellement?
           if (!isUserDataValid(user)) {
@@ -86,10 +91,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('user');
         return;
       }
+
+      const normalizedRole = normalizeUserRole(user.role);
+      const normalizedUser = normalizedRole ? { ...user, role: normalizedRole } : user;
       
-      setAuth(user);
+      setAuth(normalizedUser);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
     } else {
       setAuth(null);
       setIsAuthenticated(false);

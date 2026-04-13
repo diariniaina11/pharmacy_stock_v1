@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '@/contexts/AppServiceContext';
 import PageHeader from '@/components/shared/PageHeader';
+import { normalizeUserRole } from '@/lib/utils';
 import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +49,10 @@ const Products: React.FC = () => {
   } = useData();
 
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  const currentUser = parsedUser
+    ? { ...parsedUser, role: normalizeUserRole(parsedUser.role) || parsedUser.role }
+    : null;
   const isAdmin = currentUser?.role === 'ADMIN';
 
   const [search, setSearch] = useState('');
