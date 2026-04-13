@@ -38,6 +38,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeRequestStatus = (status: unknown): ProductRequest['status'] => {
+    const value = String(status || '').trim().toLowerCase();
+    if (value === 'en attente' || value === 'en_attente' || value === 'en-attente' || value === 'pending') {
+      return 'EN_ATTENTE';
+    }
+    if (value === 'valide' || value === 'validée' || value === 'validee' || value === 'approved') {
+      return 'VALIDE';
+    }
+    if (value === 'refuse' || value === 'refusée' || value === 'refusee' || value === 'rejected') {
+      return 'REFUSE';
+    }
+    return 'EN_ATTENTE';
+  };
+
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -112,7 +126,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         productNom: r.product?.nom || 'Produit inconnu',
         quantiteDemandee: r.quantite_demandee,
         commentaire: r.commentaire || '',
-        status: r.status,
+        status: normalizeRequestStatus(r.status),
         dateCreation: r.date_creation,
         userId: String(r.user_id),
         userName: r.user ? `${r.user.prenom} ${r.user.nom}` : 'Utilisateur inconnu',
