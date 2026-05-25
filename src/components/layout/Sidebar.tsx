@@ -26,7 +26,7 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
     { to: '/produits', icon: Package, label: 'Produits' },
-    { to: '/ventes', icon: ShoppingCart, label: 'Ventes' },
+    { to: '/ventes', icon: ShoppingCart, label: 'Sorties' },
     { to: '/peremptions', icon: AlertTriangle, label: 'Péremptions' },
     { to: '/demandes', icon: FileText, label: 'Demandes' },
     { to: '/historique', icon: History, label: "Journal d'activité" },

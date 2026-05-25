@@ -104,13 +104,13 @@ const Sales: React.FC = () => {
 
       await addSale(sale);
 
-      toast.success('Vente enregistrée');
+      toast.success('Sortie enregistrée');
       setIsDialogOpen(false);
       setSelectedProduct('');
       setQuantity(1);
     } catch (err: any) {
-      console.error('Erreur enregistr. vente:', err);
-      const message = err?.response?.data?.message || err?.message || 'Erreur lors de la création de la vente';
+      console.error('Erreur enregistr. sortie:', err);
+      const message = err?.response?.data?.message || err?.message || 'Erreur lors de la création de la sortie';
       toast.error(message);
     }
   };
@@ -128,19 +128,19 @@ const Sales: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Gestion des Ventes"
-        description="Enregistrez et suivez les ventes de produits"
+        title="Gestion des Sorties"
+        description="Enregistrez et suivez les sorties de produits"
         action={
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                Nouvelle vente
+                Nouvelle sortie
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Enregistrer une vente</DialogTitle>
+                <DialogTitle>Enregistrer une sortie</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -207,7 +207,7 @@ const Sales: React.FC = () => {
                     Annuler
                   </Button>
                   <Button type="submit">
-                    Enregistrer la vente
+                    Enregistrer la sortie
                   </Button>
                 </div>
               </form>
@@ -223,7 +223,7 @@ const Sales: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Ventes aujourd'hui
+              Sorties aujourd'hui
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -235,7 +235,7 @@ const Sales: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total ventes
+              Total sorties
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -256,12 +256,12 @@ const Sales: React.FC = () => {
         </Card>
       </div>
 
-      {/* Recent Sales */}
+      {/* Recent Sorties */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-primary" />
-            Ventes récentes
+            Sorties récentes
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -279,7 +279,7 @@ const Sales: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
                     <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">Aucune vente enregistrée</p>
+                    <p className="text-muted-foreground">Aucune sortie enregistrée</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -295,7 +295,7 @@ const Sales: React.FC = () => {
                           <Button size="sm" variant="ghost" onClick={async () => {
                             try {
                               await deleteSale(sale.id);
-                              toast.success('Vente annulée');
+                              toast.success('Sortie annulée');
                             } catch (err: any) {
                               console.error(err);
                               toast.error(err?.message || 'Erreur lors de l\'annulation');
