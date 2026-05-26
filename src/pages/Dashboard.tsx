@@ -121,18 +121,18 @@ const Dashboard: React.FC = () => {
     ? sales
     : sales.filter(s => String(s.user_id) === String(auth?.id));
 
-  const salesByDay = filteredSales.reduce((acc, sale) => {
+  const sortiesByDay = filteredSales.reduce((acc, sale) => {
     const saleDate = new Date(sale.date_vente);
     const name = saleDate.toLocaleDateString('fr-FR', { weekday: 'short' });
     const fullDate = saleDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     const existing = acc.find((item) => item.name === name);
     if (existing) {
-      existing.ventes += sale.quantite_vendue;
+      existing.sorties += sale.quantite_vendue;
     } else {
-      acc.push({ name, fullDate, ventes: sale.quantite_vendue });
+      acc.push({ name, fullDate, sorties: sale.quantite_vendue });
     }
     return acc;
-  }, [] as { name: string; fullDate: string; ventes: number }[]);
+  }, [] as { name: string; fullDate: string; sorties: number }[]);
 
   const COLORS = ['hsl(158, 64%, 40%)', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(200, 80%, 50%)', 'hsl(0, 84%, 60%)'];
 
@@ -181,12 +181,12 @@ const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-primary" />
-              Ventes récentes
+              Sorties récentes
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={salesByDay}>
+              <BarChart data={sortiesByDay}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                   }}
-                  formatter={(value: any) => [`${value} ventes`]}
+                  formatter={(value: any) => [`${value} sorties`]}
                   labelFormatter={(_, payload) => {
                     if (payload && payload.length > 0) {
                       return payload[0].payload.fullDate;
@@ -204,7 +204,7 @@ const Dashboard: React.FC = () => {
                     return "";
                   }}
                 />
-                <Bar dataKey="ventes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sorties" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
